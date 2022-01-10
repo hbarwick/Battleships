@@ -9,16 +9,16 @@ BLUE = (52, 140, 235)
 RED = (230, 15, 11)
 GREY = (107, 99, 99)
 
-SHIPS = {"Battleship": 5,
-         "Cruiser": 4,
-         "Submarine": 3,
-         "Rescue Ship": 3,
-         "Destroyer": 2,
-         "Aeroplane": 1}
+SHIPS = {"Battleship": [5, ".\Sprites\Battleship5.png"],
+         "Cruiser": [4, ".\Sprites\Cruiser4.png"],
+         "Submarine": [3, ".\Sprites\Submarine3.png"],
+         "Rescue Ship": [3, ".\Sprites\RescueShip3.png"],
+         "Destroyer": [2, ".\Sprites\Destroyer2.png"],
+         "Aeroplane": [1, ".\Sprites\Plane1.png"]}
 
 
 pygame.init()
-window_surface = pygame.display.set_mode((480, 480), 0, 32)
+window_surface = pygame.display.set_mode((1160, 560), 0, 32)
 
 
 class Grid:
@@ -26,8 +26,8 @@ class Grid:
                  num_cols=10,
                  cell_width=40,
                  grid_size=402,  # 2 extra pixels to allow line width not to be cut off
-                 x_loc=40,
-                 y_loc=40):
+                 y_loc=80,
+                 x_loc=40):
         self.y_loc = y_loc
         self.x_loc = x_loc
         self.grid_size = grid_size
@@ -65,7 +65,7 @@ class Grid:
         x, y = pygame.mouse.get_pos()
         gridx = x - self.x_loc
         gridy = y - self.y_loc
-        print(f"Mouse click at {gridx}, {gridy}")
+        print(f"Mouse click at {x}, {y}")
 
         for cell in self.cells:
             if cell.x_coord < gridx < cell.x_coord + cell.cell_width:
@@ -84,7 +84,7 @@ class Cell:
         self.cell_width = cell_width
         self.row = row
         self.column = column
-        self.rect = pygame.Rect(self.x_coord + 43, self.y_coord + 43,
+        self.rect = pygame.Rect(self.x_coord + 43, self.y_coord + 83,
                                 self.cell_width - 3, self.cell_width - 3)  # -3 to stop cell fill overlap with border
         self.surface = pygame.Surface((self.cell_width - 4,
                                        self.cell_width - 4))  # -4 to stop cell surface overlapping with cell borders
@@ -96,12 +96,18 @@ class Cell:
 
 
 class Ship(pygame.sprite.Sprite):
-    def __init__(self, name: str, length: int, coordinates: tuple, image: Path, *groups: AbstractGroup):
-        super().__init__(*groups)
-        self.coordinates = coordinates
+    def __init__(self, name: str, length: int, image: Path, x, y):
+        super().__init__()
         self.length = length
         self.name = name
-        self.image = image
+        self.image = pygame.image.load(image)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.centery = y + 20
+
+    def rotate(self):
+        self.image = pygame.transform.rotate(self.image, 270)
+
 
 
 def main():
@@ -110,16 +116,30 @@ def main():
     text_rect = text.get_rect()
     text_rect.centerx = window_surface.get_rect().centerx
     text_rect.centery = 20
+
+
     window_surface.fill(GREY)
-    pygame.draw.polygon(window_surface, BLUE, ((40, 40), (440, 40), (440, 440), (40, 440)))
     window_surface.blit(text, text_rect)
     pygame.display.update()
-    grid = Grid()
-    grid.draw_grid()
-    grid.create_cells()
-    for cell in grid.cells:
-        print(f"column {cell.column} - row{cell.row}")
-    window_surface.blit(grid.surface, grid.rect)
+
+    player_grid = Grid()
+    enemy_grid = Grid(x_loc=720)
+    player_grid.draw_grid()
+    enemy_grid.draw_grid()
+    player_grid.create_cells()
+
+    ship_list = pygame.sprite.Group()
+    ship_y = 160
+    ship_x = 480
+    for ship in SHIPS:
+        path = Path(SHIPS[ship][1])
+        name = ship
+        length = SHIPS[ship][0]
+        ship_list.add(Ship(name, length, path, ship_x, ship_y))
+        ship_y += 40
+    ship_list.draw(window_surface)
+    window_surface.blit(player_grid.surface, player_grid.rect)
+    window_surface.blit(enemy_grid.surface, enemy_grid.rect)
     pygame.display.flip()
 
     while True:
@@ -128,7 +148,7 @@ def main():
                 pygame.quit()
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN:
-                grid.get_cell()
+                player_grid.get_cell()
 
 
 if __name__ == '__main__':
