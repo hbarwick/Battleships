@@ -106,8 +106,17 @@ class Ship(pygame.sprite.Sprite):
         self.rect.centery = y + 20
 
     def rotate(self):
-        self.image = pygame.transform.rotate(self.image, 270)
+        self.image = pygame.transform.rotate(self.image, 90)
 
+
+class Button(pygame.sprite.Sprite):
+    def __init__(self, name: str, image: Path, x, y):
+        super().__init__()
+        self.name = name
+        self.image = pygame.image.load(image)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.centery = y + 20
 
 
 def main():
@@ -129,6 +138,8 @@ def main():
     player_grid.create_cells()
 
     ship_list = pygame.sprite.Group()
+    button_list = pygame.sprite.Group()
+
     ship_y = 160
     ship_x = 480
     for ship in SHIPS:
@@ -142,6 +153,8 @@ def main():
     window_surface.blit(enemy_grid.surface, enemy_grid.rect)
     pygame.display.flip()
 
+    selected = None
+    clock = pygame.time.Clock()
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -149,7 +162,40 @@ def main():
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN:
                 player_grid.get_cell()
+                if selected is None:  # First click selects the ship and will start dragging
+                    for i, ship in enumerate(ship_list):
+                        if ship.rect.collidepoint(event.pos):
+                            selected = i
+                            print(ship.name)
+                            shipmove_x = ship.rect.x - event.pos[0]
+                            shipmove_y = ship.rect.y - event.pos[1]
+                else:
+                    for sprite in button_list.sprites():
+                        if sprite.rect.collidepoint(event.pos):
+                            ships = ship_list.sprites()
+                            ships[selected].rotate()
+                        else:
+                            selected = None  # Second click puts the ship down
 
+            elif event.type == pygame.MOUSEMOTION:
+                if selected is not None:  # selected can be `0` so `is not None` is required
+                    rotate_button = Button("rotate", Path(r".\sprites\Rotate_button.png"), 500, 440)
+                    button_list.add(rotate_button)
+                    ships = ship_list.sprites()
+                    ships[selected].rect.x = event.pos[0] + shipmove_x
+                    ships[selected].rect.y = event.pos[1] + shipmove_y
+
+
+        window_surface.fill(GREY)
+        window_surface.blit(player_grid.surface, player_grid.rect)
+        window_surface.blit(enemy_grid.surface, enemy_grid.rect)
+        button_list.update()
+        button_list.draw(window_surface)
+        ship_list.update()
+        ship_list.draw(window_surface)
+        pygame.display.update()
+
+        clock.tick(25)
 
 if __name__ == '__main__':
     main()
