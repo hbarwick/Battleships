@@ -11,11 +11,10 @@ GREY = (107, 99, 99)
 
 SHIPS = {"Battleship": [5, ".\Sprites\Battleship5.png"],
          "Cruiser": [4, ".\Sprites\Cruiser4.png"],
-         "Submarine": [3, ".\Sprites\Submarine3.png"],
+         "Submarine": [4, ".\Sprites\Submarine3.png"],
          "Rescue Ship": [3, ".\Sprites\RescueShip3.png"],
          "Destroyer": [2, ".\Sprites\Destroyer2.png"],
          "Aeroplane": [1, ".\Sprites\Plane1.png"]}
-
 
 pygame.init()
 window_surface = pygame.display.set_mode((1160, 560), 0, 32)
@@ -107,6 +106,7 @@ class Ship(pygame.sprite.Sprite):
 
     def rotate(self):
         self.image = pygame.transform.rotate(self.image, 90)
+        self.rect = self.image.get_rect()
 
 
 class Button(pygame.sprite.Sprite):
@@ -119,27 +119,30 @@ class Button(pygame.sprite.Sprite):
         self.rect.centery = y + 20
 
 
-def main():
+def display_text():
     title_font = pygame.font.SysFont(None, 42)
-    text = title_font.render("Battleships!", True, BLACK, GREY)
-    text_rect = text.get_rect()
-    text_rect.centerx = window_surface.get_rect().centerx
-    text_rect.centery = 20
+    title_text = title_font.render("Battleships!", True, BLACK, GREY)
+    title_text_rect = title_text.get_rect()
+    title_text_rect.centerx = window_surface.get_rect().centerx
+    title_text_rect.centery = 30
+
+    grid_header_font = pygame.font.SysFont(None, 35)
+    player_text = grid_header_font.render("Player Grid", True, BLACK, GREY)
+    player_text_rect = player_text.get_rect()
+    player_text_rect.centerx = 240
+    player_text_rect.centery = 50
+
+    enemy_text = grid_header_font.render("Enemy Grid", True, BLACK, GREY)
+    enemy_text_rect = enemy_text.get_rect()
+    enemy_text_rect.centerx = 920
+    enemy_text_rect.centery = 50
+
+    window_surface.blit(title_text, title_text_rect)
+    window_surface.blit(player_text, player_text_rect)
+    window_surface.blit(enemy_text, enemy_text_rect)
 
 
-    window_surface.fill(GREY)
-    window_surface.blit(text, text_rect)
-    pygame.display.update()
-
-    player_grid = Grid()
-    enemy_grid = Grid(x_loc=720)
-    player_grid.draw_grid()
-    enemy_grid.draw_grid()
-    player_grid.create_cells()
-
-    ship_list = pygame.sprite.Group()
-    button_list = pygame.sprite.Group()
-
+def create_ships(ship_list):
     ship_y = 160
     ship_x = 480
     for ship in SHIPS:
@@ -149,10 +152,22 @@ def main():
         ship_list.add(Ship(name, length, path, ship_x, ship_y))
         ship_y += 40
     ship_list.draw(window_surface)
-    window_surface.blit(player_grid.surface, player_grid.rect)
-    window_surface.blit(enemy_grid.surface, enemy_grid.rect)
-    pygame.display.flip()
 
+
+def main():
+    # Set up and draw the player and enemy grids
+    player_grid = Grid()
+    enemy_grid = Grid(x_loc=720)
+    player_grid.draw_grid()
+    enemy_grid.draw_grid()
+    player_grid.create_cells()
+
+    # Create sprite list groups
+    ship_list = pygame.sprite.Group()
+    button_list = pygame.sprite.Group()
+    create_ships(ship_list)
+
+    # Main game loop
     selected = None
     clock = pygame.time.Clock()
     while True:
@@ -185,10 +200,10 @@ def main():
                     ships[selected].rect.x = event.pos[0] + shipmove_x
                     ships[selected].rect.y = event.pos[1] + shipmove_y
 
-
         window_surface.fill(GREY)
         window_surface.blit(player_grid.surface, player_grid.rect)
         window_surface.blit(enemy_grid.surface, enemy_grid.rect)
+        display_text()
         button_list.update()
         button_list.draw(window_surface)
         ship_list.update()
@@ -196,6 +211,7 @@ def main():
         pygame.display.update()
 
         clock.tick(25)
+
 
 if __name__ == '__main__':
     main()
