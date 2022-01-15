@@ -104,9 +104,11 @@ class Ship(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.centery = y + 20
 
-    def rotate(self):
+    def rotate(self, x, y):
         self.image = pygame.transform.rotate(self.image, 90)
         self.rect = self.image.get_rect()
+        self.rect.centerx = x
+        self.rect.centery = y
 
 
 class Button(pygame.sprite.Sprite):
@@ -143,7 +145,7 @@ def display_text():
 
 
 def create_ships(ship_list):
-    ship_y = 160
+    ship_y = 100
     ship_x = 480
     for ship in SHIPS:
         path = Path(SHIPS[ship][1])
@@ -167,6 +169,12 @@ def main():
     button_list = pygame.sprite.Group()
     create_ships(ship_list)
 
+    # Create Buttons
+    rotate_button = Button("rotate", Path(r".\sprites\Rotate_button.png"), 500, 380)
+    lock_in_button = Button("lock-in", Path(r".\sprites\lock-in_button.png"), 500, 480)
+    button_list.add(rotate_button)
+    button_list.add(lock_in_button)
+
     # Main game loop
     selected = None
     clock = pygame.time.Clock()
@@ -187,15 +195,21 @@ def main():
                 else:
                     for sprite in button_list.sprites():
                         if sprite.rect.collidepoint(event.pos):
-                            ships = ship_list.sprites()
-                            ships[selected].rotate()
+                            if sprite.name == "rotate":
+                                ships = ship_list.sprites()
+                                ships[selected].rotate(event.pos[0], event.pos[1])
+                            if sprite.name == "lock-in":
+                                pass
+                                # TODO when lock in pressed
+                                #  1. Centre the ships on their places on the grid
+                                #  2. loop through cells and detect collisions
+                                #  3. Update the cells with ship data
+
                         else:
                             selected = None  # Second click puts the ship down
 
             elif event.type == pygame.MOUSEMOTION:
                 if selected is not None:  # selected can be `0` so `is not None` is required
-                    rotate_button = Button("rotate", Path(r".\sprites\Rotate_button.png"), 500, 440)
-                    button_list.add(rotate_button)
                     ships = ship_list.sprites()
                     ships[selected].rect.x = event.pos[0] + shipmove_x
                     ships[selected].rect.y = event.pos[1] + shipmove_y
