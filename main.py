@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+import random
 import pygame
 from pygame.locals import *
 
@@ -95,8 +96,11 @@ class Cell:
 
 
 class Ship(pygame.sprite.Sprite):
-    def __init__(self, name: str, length: int, image: Path, x=0, y=0):
+    def __init__(self, name: str, length: int, image: Path, x=0, y=0, column=0, row=0, horizontal=True):
         super().__init__()
+        self.horizontal = horizontal
+        self.row = row
+        self.column = column
         self.length = length
         self.name = name
         self.image = pygame.image.load(image)
@@ -110,6 +114,7 @@ class Ship(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.centerx = x
         self.rect.centery = y
+        self.horizontal = not self.horizontal
 
 
 class Button(pygame.sprite.Sprite):
@@ -131,7 +136,9 @@ class enemy_ai():
             print(ship.name)
 
     def randomise_ships(self):
-        pass
+        for ship in self.ships:
+            pass
+
 
 
 
@@ -213,6 +220,7 @@ def main():
                             shipmove_y = ship.rect.y - event.pos[1]
                     for sprite in button_list.sprites():
                         if sprite.rect.collidepoint(event.pos):
+                            # Detect if the Lock in button has been clicked
                             if sprite.name == "lock-in":
                                 for ship in ship_list.sprites():
                                     print(ship.name, ship.rect.x, ship.rect.y)
