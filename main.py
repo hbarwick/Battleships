@@ -95,7 +95,7 @@ class Cell:
 
 
 class Ship(pygame.sprite.Sprite):
-    def __init__(self, name: str, length: int, image: Path, x, y):
+    def __init__(self, name: str, length: int, image: Path, x=0, y=0):
         super().__init__()
         self.length = length
         self.name = name
@@ -103,6 +103,7 @@ class Ship(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.centery = y + 20
+
 
     def rotate(self, x, y):
         self.image = pygame.transform.rotate(self.image, 90)
@@ -119,6 +120,19 @@ class Button(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.centery = y + 20
+
+
+class enemy_ai():
+    def __init__(self):
+        self.ships = [Ship(ship, SHIPS[ship][0], SHIPS[ship][1]) for ship in SHIPS]
+
+    def print_ships(self):
+        for ship in self.ships:
+            print(ship.name)
+
+    def randomise_ships(self):
+        pass
+
 
 
 def display_text():
@@ -145,6 +159,8 @@ def display_text():
 
 
 def create_ships(ship_list):
+    """Creates the player's ship sprites from the SHIPS dict and draws to the area
+    between the player and enemy grid"""
     ship_y = 100
     ship_x = 480
     for ship in SHIPS:
@@ -175,6 +191,9 @@ def main():
     button_list.add(rotate_button)
     button_list.add(lock_in_button)
 
+    enemy = enemy_ai()
+    enemy.print_ships()
+
     # Main game loop
     selected = None
     clock = pygame.time.Clock()
@@ -192,14 +211,20 @@ def main():
                             print(ship.name)
                             shipmove_x = ship.rect.x - event.pos[0]
                             shipmove_y = ship.rect.y - event.pos[1]
+                    for sprite in button_list.sprites():
+                        if sprite.rect.collidepoint(event.pos):
+                            if sprite.name == "lock-in":
+                                for ship in ship_list.sprites():
+                                    print(ship.name, ship.rect.x, ship.rect.y)
+
                 else:
                     for sprite in button_list.sprites():
                         if sprite.rect.collidepoint(event.pos):
                             if sprite.name == "rotate":
                                 ships = ship_list.sprites()
                                 ships[selected].rotate(event.pos[0], event.pos[1])
-                            if sprite.name == "lock-in":
-                                pass
+                                break  # break out of sprite checking loop to avoid selected=None if button pressed
+
                                 # TODO when lock in pressed
                                 #  1. Centre the ships on their places on the grid
                                 #  2. loop through cells and detect collisions
