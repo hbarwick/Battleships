@@ -10,12 +10,12 @@ BLUE = (52, 140, 235)
 RED = (230, 15, 11)
 GREY = (107, 99, 99)
 
-SHIPS = {"Battleship": [5, ".\Sprites\Battleship5.png"],
-         "Cruiser": [4, ".\Sprites\Cruiser4.png"],
-         "Submarine": [4, ".\Sprites\Submarine3.png"],
-         "Rescue Ship": [3, ".\Sprites\RescueShip3.png"],
-         "Destroyer": [2, ".\Sprites\Destroyer2.png"],
-         "Aeroplane": [1, ".\Sprites\Plane1.png"]}
+SHIPS = {"Battleship": [5, r".\Sprites\Battleship5.png"],
+         "Cruiser": [4, r".\Sprites\Cruiser4.png"],
+         "Submarine": [4, r".\Sprites\Submarine3.png"],
+         "Rescue Ship": [3, r".\Sprites\RescueShip3.png"],
+         "Destroyer": [2, r".\Sprites\Destroyer2.png"],
+         "Aeroplane": [1, r".\Sprites\Plane1.png"]}
 
 pygame.init()
 window_surface = pygame.display.set_mode((1160, 560), 0, 32)
@@ -76,19 +76,25 @@ class Grid:
     def check_ship(self, ship_endpoint, horizontal):
         for cell in self.cells:
             if cell.rect.collidepoint(ship_endpoint):
-                if horizontal == True:
-                    return cell.rect.midleft
+                if horizontal:
+                    return cell.rect.midleft, cell.row, cell.column
                 else:
-                    return cell.rect.midtop
+                    return cell.rect.midtop, cell.row, cell.column
 
-    def update_cells_with_ships(self, starting_x: int, starting_y: int, shipname: str, length: int, horizontal: bool):
-        if horizontal == True:
-            ship_cells = [(starting_x, starting_y)]
-
-            for cell in self.cells:
-                coords = (cell.row, cell.column)
-                if coords == starting_coords
-
+    def update_cells_with_ship(self, starting_x: int, starting_y: int, shipname: str, length: int, horizontal: bool):
+        ship_coords = []
+        if horizontal:
+            for i in range(length):
+                ship_coords.append((starting_x, starting_y))
+                starting_x += 1
+        else:
+            for i in range(length):
+                ship_coords.append((starting_x, starting_y))
+                starting_y += 1
+        for cell in self.cells:
+            cell_coords = (cell.row, cell.column)
+            if cell_coords in ship_coords:
+                cell.ship = shipname
 
 
 class Cell:
@@ -104,11 +110,11 @@ class Cell:
                                        self.cell_width - 4))  # -4 to stop cell surface overlapping with cell borders
         self.ship = None
 
-
     def change_colour(self):
         self.surface.fill(RED)
         window_surface.blit(self.surface, self.rect)
         pygame.display.flip()
+        print(self.ship)
 
 
 class Ship(pygame.sprite.Sprite):
@@ -123,7 +129,6 @@ class Ship(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.centery = y + 20
-
 
     def rotate(self, x, y):
         self.image = pygame.transform.rotate(self.image, 90)
@@ -143,7 +148,7 @@ class Button(pygame.sprite.Sprite):
         self.rect.centery = y + 20
 
 
-class enemy_ai():
+class EnemyAi:
     def __init__(self):
         self.ships = [Ship(ship, SHIPS[ship][0], SHIPS[ship][1]) for ship in SHIPS]
 
@@ -192,6 +197,80 @@ def create_ships(ship_list):
         ship_y += 40
     ship_list.draw(window_surface)
 
+def refresh_screen(player_grid, enemy_grid, button_list, ship_list):
+    window_surface.fill(GREY)
+    window_surface.blit(player_grid.surface, player_grid.rect)
+    window_surface.blit(enemy_grid.surface, enemy_grid.rect)
+    display_text()
+    button_list.update()
+    button_list.draw(window_surface)
+    ship_list.update()
+    ship_list.draw(window_surface)
+    pygame.display.update()
+
+
+def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock):
+    setting_up = True
+    selected = None
+    while setting_up:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == MOUSEBUTTONDOWN:
+                player_grid.get_cell()
+                if selected is None:  # First click selects the ship and will start dragging
+                    for i, ship in enumerate(ship_list):
+                        if ship.rect.collidepoint(event.pos):
+                            selected = i
+                            print(ship.name)
+                            shipmove_x = ship.rect.x - event.pos[0]
+                            shipmove_y = ship.rect.y - event.pos[1]
+                    for sprite in button_list.sprites():
+                        if sprite.rect.collidepoint(event.pos):
+                            # Detect if the Lock in button has been clicked
+                            if sprite.name == "lock-in":
+                                print("locking in...")
+                                for ship in ship_list.sprites():
+                                    if ship.horizontal:
+                                        # Retrieve the details of the left/top cell the ship is on
+                                        cell_details = player_grid.check_ship(ship.rect.midleft, True)
+                                        if cell_details:
+                                            ship.rect.midleft = cell_details[0]
+                                            # Update all cells the ship falls on with the shipname
+                                            player_grid.update_cells_with_ship(starting_x=cell_details[1],
+                                                                               starting_y=cell_details[2],
+                                                                               shipname=ship.name,
+                                                                               length=ship.length,
+                                                                               horizontal=True)
+                                    else:
+                                        cell_details = player_grid.check_ship(ship.rect.midtop, False)
+                                        if cell_details:
+                                            ship.rect.midtop = cell_details[0]
+                                            player_grid.update_cells_with_ship(starting_x=cell_details[1],
+                                                                               starting_y=cell_details[2],
+                                                                               shipname=ship.name,
+                                                                               length=ship.length,
+                                                                               horizontal=False)
+                                setting_up = False
+                else:
+                    for sprite in button_list.sprites():
+                        if sprite.rect.collidepoint(event.pos):
+                            if sprite.name == "rotate":
+                                ships = ship_list.sprites()
+                                ships[selected].rotate(event.pos[0], event.pos[1])
+                                break  # break out of sprite checking loop to avoid selected=None if button pressed
+                        else:
+                            selected = None  # Second click puts the ship down
+
+            elif event.type == pygame.MOUSEMOTION:
+                if selected is not None:  # selected can be `0` so `is not None` is required
+                    ships = ship_list.sprites()
+                    ships[selected].rect.x = event.pos[0] + shipmove_x
+                    ships[selected].rect.y = event.pos[1] + shipmove_y
+
+        refresh_screen(player_grid, enemy_grid, button_list, ship_list)
+        clock.tick(25)
 
 def main():
     # Set up and draw the player and enemy grids
@@ -212,12 +291,14 @@ def main():
     button_list.add(rotate_button)
     button_list.add(lock_in_button)
 
-    enemy = enemy_ai()
+    enemy = EnemyAi()
     enemy.print_ships()
 
     # Main game loop
-    selected = None
+
     clock = pygame.time.Clock()
+    set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock)
+
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -225,62 +306,7 @@ def main():
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN:
                 player_grid.get_cell()
-                if selected is None:  # First click selects the ship and will start dragging
-                    for i, ship in enumerate(ship_list):
-                        if ship.rect.collidepoint(event.pos):
-                            selected = i
-                            print(ship.name)
-                            shipmove_x = ship.rect.x - event.pos[0]
-                            shipmove_y = ship.rect.y - event.pos[1]
-                    for sprite in button_list.sprites():
-                        if sprite.rect.collidepoint(event.pos):
-                            # Detect if the Lock in button has been clicked
-                            if sprite.name == "lock-in":
-                                print("locking in...")
-                                for ship in ship_list.sprites():
-                                    if ship.horizontal == True:
-                                        cell_midleft = player_grid.check_ship(ship.rect.midleft, True)
-                                        if cell_midleft:
-                                            ship.rect.midleft = cell_midleft
-                                    else:
-                                        cell_midtop = player_grid.check_ship(ship.rect.midtop, False)
-                                        if cell_midtop:
-                                            ship.rect.midtop = cell_midtop
 
-
-                else:
-                    for sprite in button_list.sprites():
-                        if sprite.rect.collidepoint(event.pos):
-                            if sprite.name == "rotate":
-                                ships = ship_list.sprites()
-                                ships[selected].rotate(event.pos[0], event.pos[1])
-                                break  # break out of sprite checking loop to avoid selected=None if button pressed
-
-                                # TODO when lock in pressed
-                                #  1. Centre the ships on their places on the grid - Done
-                                #  2. loop through cells and detect collisions
-                                #  3. Update the cells with ship data
-
-                        else:
-                            selected = None  # Second click puts the ship down
-
-            elif event.type == pygame.MOUSEMOTION:
-                if selected is not None:  # selected can be `0` so `is not None` is required
-                    ships = ship_list.sprites()
-                    ships[selected].rect.x = event.pos[0] + shipmove_x
-                    ships[selected].rect.y = event.pos[1] + shipmove_y
-
-        window_surface.fill(GREY)
-        window_surface.blit(player_grid.surface, player_grid.rect)
-        window_surface.blit(enemy_grid.surface, enemy_grid.rect)
-        display_text()
-        button_list.update()
-        button_list.draw(window_surface)
-        ship_list.update()
-        ship_list.draw(window_surface)
-        pygame.display.update()
-
-        clock.tick(25)
 
 
 if __name__ == '__main__':
