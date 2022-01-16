@@ -95,6 +95,7 @@ class Grid:
             cell_coords = (cell.row, cell.column)
             if cell_coords in ship_coords:
                 cell.ship = shipname
+        # TODO - BUG - identify why occasionally ships don't update to the cells
 
 
 class Cell:
@@ -253,6 +254,8 @@ def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock):
                                                                                length=ship.length,
                                                                                horizontal=False)
                                 setting_up = False
+                                # TODO check to make sure all ships are on the grid before exiting setup phase
+
                 else:
                     for sprite in button_list.sprites():
                         if sprite.rect.collidepoint(event.pos):
