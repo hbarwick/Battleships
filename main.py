@@ -81,6 +81,14 @@ class Grid:
                 else:
                     return cell.rect.midtop
 
+    def update_cells_with_ships(self, starting_x: int, starting_y: int, shipname: str, length: int, horizontal: bool):
+        if horizontal == True:
+            ship_cells = [(starting_x, starting_y)]
+
+            for cell in self.cells:
+                coords = (cell.row, cell.column)
+                if coords == starting_coords
+
 
 
 class Cell:
@@ -94,6 +102,8 @@ class Cell:
                                 self.cell_width - 3, self.cell_width - 3)  # -3 to stop cell fill overlap with border
         self.surface = pygame.Surface((self.cell_width - 4,
                                        self.cell_width - 4))  # -4 to stop cell surface overlapping with cell borders
+        self.ship = None
+
 
     def change_colour(self):
         self.surface.fill(RED)
@@ -247,7 +257,7 @@ def main():
                                 break  # break out of sprite checking loop to avoid selected=None if button pressed
 
                                 # TODO when lock in pressed
-                                #  1. Centre the ships on their places on the grid
+                                #  1. Centre the ships on their places on the grid - Done
                                 #  2. loop through cells and detect collisions
                                 #  3. Update the cells with ship data
 
