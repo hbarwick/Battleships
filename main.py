@@ -73,8 +73,14 @@ class Grid:
                     print(cell.row, cell.column)
                     cell.change_colour()
 
-    def add_ships(self):
-        pass
+    def check_ship(self, ship_endpoint, horizontal):
+        for cell in self.cells:
+            if cell.rect.collidepoint(ship_endpoint):
+                if horizontal == True:
+                    return cell.rect.midleft
+                else:
+                    return cell.rect.midtop
+
 
 
 class Cell:
@@ -138,8 +144,6 @@ class enemy_ai():
     def randomise_ships(self):
         for ship in self.ships:
             pass
-
-
 
 
 def display_text():
@@ -222,8 +226,17 @@ def main():
                         if sprite.rect.collidepoint(event.pos):
                             # Detect if the Lock in button has been clicked
                             if sprite.name == "lock-in":
+                                print("locking in...")
                                 for ship in ship_list.sprites():
-                                    print(ship.name, ship.rect.x, ship.rect.y)
+                                    if ship.horizontal == True:
+                                        cell_midleft = player_grid.check_ship(ship.rect.midleft, True)
+                                        if cell_midleft:
+                                            ship.rect.midleft = cell_midleft
+                                    else:
+                                        cell_midtop = player_grid.check_ship(ship.rect.midtop, False)
+                                        if cell_midtop:
+                                            ship.rect.midtop = cell_midtop
+
 
                 else:
                     for sprite in button_list.sprites():
