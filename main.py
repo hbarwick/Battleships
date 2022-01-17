@@ -49,9 +49,9 @@ class Grid:
             grid_y += self.cell_width
 
     def create_cells(self):
-        cell_y = 0
+        cell_y = self.y_loc
         for col in range(self.num_rows):
-            cell_x = 0
+            cell_x = self.x_loc
             for row in range(self.num_cols):
                 self.cells.append(Cell(x_coord=cell_x,
                                        y_coord=cell_y,
@@ -63,13 +63,11 @@ class Grid:
 
     def get_cell(self):
         x, y = pygame.mouse.get_pos()
-        gridx = x - self.x_loc
-        gridy = y - self.y_loc
         print(f"Mouse click at {x}, {y}")
 
         for cell in self.cells:
-            if cell.x_coord < gridx < cell.x_coord + cell.cell_width:
-                if cell.y_coord < gridy < cell.y_coord + cell.cell_width:
+            if cell.x_coord < x < cell.x_coord + cell.cell_width:
+                if cell.y_coord < y < cell.y_coord + cell.cell_width:
                     print(cell.row, cell.column)
                     cell.change_colour()
 
@@ -94,7 +92,6 @@ class Grid:
             cell_coords = (cell.row, cell.column)
             if cell_coords in ship_coords:
                 cell.ship = shipname
-        # TODO - BUG - identify why occasionally ships don't update to the cells
 
 
 class Cell:
@@ -104,12 +101,14 @@ class Cell:
         self.cell_width = cell_width
         self.row = row
         self.column = column
-        self.rect = pygame.Rect(self.x_coord + 43, self.y_coord + 83,
+        self.rect = pygame.Rect(self.x_coord, self.y_coord,
                                 self.cell_width - 3, self.cell_width - 3)  # -3 to stop cell fill overlap with border
         self.surface = pygame.Surface((self.cell_width - 4,
                                        self.cell_width - 4))  # -4 to stop cell surface overlapping with cell borders
         self.ship = None
 
+    # TODO if change_colour is required need to find better way to ensure complete fill,
+    # adding 3 pixels to the Cell rects caused bug on ship lock-in
     def change_colour(self):
         self.surface.fill(RED)
         window_surface.blit(self.surface, self.rect)
@@ -158,7 +157,7 @@ class EnemyAi:
 
     def randomise_ships(self):
         for ship in self.ships:
-            pass
+            ship.horizontal = random.choice([True, False])
 
 
 def display_text():
@@ -197,6 +196,7 @@ def create_ships(ship_list):
         ship_y += 40
     ship_list.draw(window_surface)
 
+
 def refresh_screen(player_grid, enemy_grid, button_list, ship_list):
     window_surface.fill(GREY)
     window_surface.blit(player_grid.surface, player_grid.rect)
@@ -218,7 +218,12 @@ def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock):
                 pygame.quit()
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN:
-                player_grid.get_cell()
+
+                if player_grid.rect.collidepoint(event.pos):
+                    player_grid.get_cell()
+                elif enemy_grid.rect.collidepoint(event.pos):
+                    enemy_grid.get_cell()
+
                 if selected is None:  # First click selects the ship and will start dragging
                     for i, ship in enumerate(ship_list):
                         if ship.rect.collidepoint(event.pos):
@@ -275,13 +280,13 @@ def lock_in_ships(player_grid, setting_up, ship_list):
                                                    length=ship.length,
                                                    horizontal=False)
     # retrieve set of ships contained in the cells
-    # compare with set of ship names, end setup phase if all ships on board
+    # compare with set of ship names, end setup phase if all ships on the board
     ships_on_board = {cell.ship for cell in player_grid.cells if cell.ship is not None}
     ships = set(SHIPS.keys())
     if ships_on_board == ships:
         setting_up = False
     else:
-        # clear the ship attribute of all cells
+        # clear the ship attribute from all cells
         for cell in player_grid.cells:
             cell.ship = None
     print(ships_on_board)
@@ -295,6 +300,7 @@ def main():
     player_grid.draw_grid()
     enemy_grid.draw_grid()
     player_grid.create_cells()
+    enemy_grid.create_cells()
 
     # Create sprite list groups
     ship_list = pygame.sprite.Group()
@@ -309,6 +315,7 @@ def main():
 
     enemy = EnemyAi()
     enemy.print_ships()
+    enemy.randomise_ships()
 
     # Main game loop
 
@@ -321,8 +328,12 @@ def main():
                 pygame.quit()
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN:
-                player_grid.get_cell()
-
+                if player_grid.rect.collidepoint(event.pos):
+                    print("player grid clicked")
+                    player_grid.get_cell()
+                elif enemy_grid.rect.collidepoint(event.pos):
+                    print("enemy grid clicked")
+                    enemy_grid.get_cell()
 
 
 if __name__ == '__main__':
