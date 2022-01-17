@@ -230,40 +230,7 @@ def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock):
                         if sprite.rect.collidepoint(event.pos):
                             # Detect if the Lock in button has been clicked
                             if sprite.name == "lock-in":
-                                print("locking in...")
-                                for ship in ship_list.sprites():
-                                    if ship.horizontal:
-                                        # Retrieve the details of the left/top cell the ship is on
-                                        cell_details = player_grid.check_ship(ship.rect.midleft, True)
-                                        if cell_details:
-                                            ship.rect.midleft = cell_details[0]
-                                            # Update all cells the ship falls on with the shipname
-                                            player_grid.update_cells_with_ship(starting_x=cell_details[1],
-                                                                               starting_y=cell_details[2],
-                                                                               shipname=ship.name,
-                                                                               length=ship.length,
-                                                                               horizontal=True)
-                                    else:
-                                        cell_details = player_grid.check_ship(ship.rect.midtop, False)
-                                        if cell_details:
-                                            ship.rect.midtop = cell_details[0]
-                                            player_grid.update_cells_with_ship(starting_x=cell_details[1],
-                                                                               starting_y=cell_details[2],
-                                                                               shipname=ship.name,
-                                                                               length=ship.length,
-                                                                               horizontal=False)
-                                # retrieve set of ships contained in the cells
-                                # compare with set of ship names, end setup phase if all ships on board
-                                ships_on_board = {cell.ship for cell in player_grid.cells if cell.ship is not None}
-                                ships = set(SHIPS.keys())
-                                if ships_on_board == ships:
-                                    setting_up = False
-                                else:
-                                    # clear the ship attribute of all cells
-                                    for cell in player_grid.cells:
-                                        cell.ship = None
-                                print(ships_on_board)
-
+                                setting_up = lock_in_ships(player_grid, setting_up, ship_list)
                 else:
                     for sprite in button_list.sprites():
                         if sprite.rect.collidepoint(event.pos):
@@ -282,6 +249,44 @@ def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock):
 
         refresh_screen(player_grid, enemy_grid, button_list, ship_list)
         clock.tick(25)
+
+
+def lock_in_ships(player_grid, setting_up, ship_list):
+    print("locking in...")
+    for ship in ship_list.sprites():
+        if ship.horizontal:
+            # Retrieve the details of the left/top cell the ship is on
+            cell_details = player_grid.check_ship(ship.rect.midleft, True)
+            if cell_details:
+                ship.rect.midleft = cell_details[0]
+                # Update all cells the ship falls on with the shipname
+                player_grid.update_cells_with_ship(starting_x=cell_details[1],
+                                                   starting_y=cell_details[2],
+                                                   shipname=ship.name,
+                                                   length=ship.length,
+                                                   horizontal=True)
+        else:
+            cell_details = player_grid.check_ship(ship.rect.midtop, False)
+            if cell_details:
+                ship.rect.midtop = cell_details[0]
+                player_grid.update_cells_with_ship(starting_x=cell_details[1],
+                                                   starting_y=cell_details[2],
+                                                   shipname=ship.name,
+                                                   length=ship.length,
+                                                   horizontal=False)
+    # retrieve set of ships contained in the cells
+    # compare with set of ship names, end setup phase if all ships on board
+    ships_on_board = {cell.ship for cell in player_grid.cells if cell.ship is not None}
+    ships = set(SHIPS.keys())
+    if ships_on_board == ships:
+        setting_up = False
+    else:
+        # clear the ship attribute of all cells
+        for cell in player_grid.cells:
+            cell.ship = None
+    print(ships_on_board)
+    return setting_up
+
 
 def main():
     # Set up and draw the player and enemy grids
