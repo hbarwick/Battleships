@@ -83,14 +83,13 @@ class Grid:
 
     def update_cells_with_ship(self, starting_x: int, starting_y: int, shipname: str, length: int, horizontal: bool):
         ship_coords = []
-        if horizontal:
-            for i in range(length):
-                ship_coords.append((starting_x, starting_y))
+        for i in range(length):
+            ship_coords.append((starting_x, starting_y))
+            if horizontal:
                 starting_x += 1
-        else:
-            for i in range(length):
-                ship_coords.append((starting_x, starting_y))
+            else:
                 starting_y += 1
+        print(shipname, ship_coords)
         for cell in self.cells:
             cell_coords = (cell.row, cell.column)
             if cell_coords in ship_coords:
@@ -253,8 +252,17 @@ def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock):
                                                                                shipname=ship.name,
                                                                                length=ship.length,
                                                                                horizontal=False)
-                                setting_up = False
-                                # TODO check to make sure all ships are on the grid before exiting setup phase
+                                # retrieve set of ships contained in the cells
+                                # compare with set of ship names, end setup phase if all ships on board
+                                ships_on_board = {cell.ship for cell in player_grid.cells if cell.ship is not None}
+                                ships = set(SHIPS.keys())
+                                if ships_on_board == ships:
+                                    setting_up = False
+                                else:
+                                    # clear the ship attribute of all cells
+                                    for cell in player_grid.cells:
+                                        cell.ship = None
+                                print(ships_on_board)
 
                 else:
                     for sprite in button_list.sprites():
