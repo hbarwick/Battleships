@@ -1,4 +1,5 @@
 from pathlib import Path
+from itertools import count
 import sys
 import random
 import pygame
@@ -279,17 +280,19 @@ def lock_in_ships(player_grid, setting_up, ship_list):
                                                    shipname=ship.name,
                                                    length=ship.length,
                                                    horizontal=False)
-    # retrieve set of ships contained in the cells
-    # compare with set of ship names, end setup phase if all ships on the board
-    ships_on_board = {cell.ship for cell in player_grid.cells if cell.ship is not None}
-    ships = set(SHIPS.keys())
-    if ships_on_board == ships:
+
+    # Count the total number of cells with a ship, compare with the sum of the lengths of ships in the input dict
+    # This will ensure all ships are fully on grid, and none are overlapping
+    ship_cell_total = len([cell.ship for cell in player_grid.cells if cell.ship is not None])
+    ship_dict_total = sum([ship[0] for ship in SHIPS.values()])
+
+    # End setup phase if ship check passes
+    if ship_cell_total == ship_dict_total:
         setting_up = False
     else:
         # clear the ship attribute from all cells
         for cell in player_grid.cells:
             cell.ship = None
-    print(ships_on_board)
     return setting_up
 
 
