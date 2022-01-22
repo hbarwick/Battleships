@@ -1,5 +1,5 @@
 from pathlib import Path
-from itertools import count
+import itertools
 import sys
 import random
 import pygame
@@ -149,7 +149,8 @@ class Button(pygame.sprite.Sprite):
 
 
 class EnemyAi:
-    def __init__(self):
+    def __init__(self, grid):
+        self.grid = grid
         self.ships = [Ship(ship, SHIPS[ship][0], SHIPS[ship][1]) for ship in SHIPS]
 
     def print_ships(self):
@@ -157,8 +158,40 @@ class EnemyAi:
             print(ship.name)
 
     def randomise_ships(self):
+        rows = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        columns = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        grid = itertools.product(rows, columns)
+        available_cells = [cell for cell in grid]
         for ship in self.ships:
-            ship.horizontal = random.choice([True, False])
+            ship_coordinates = self.randomize_ship_coordinates(columns, rows, ship, available_cells)
+            available_cells = [cell for cell in available_cells if cell not in ship_coordinates]
+        print(available_cells)
+
+    def randomize_ship_coordinates(self, columns, rows, ship, available_cells):
+        ship.horizontal = random.choice([True, False])
+        ship_coordinates = []
+        if ship.horizontal:
+            ship.row = random.choice(rows)
+            available_columns = columns[:-ship.length]
+            ship.column = random.choice(available_columns)
+            y = ship.row
+            for i in range(ship.length):
+                ship_coordinates.append((ship.column, y))
+                y += 1
+            print(ship.name, ship_coordinates)
+        else:
+            ship.column = random.choice(columns)
+            available_rows = rows[:-ship.length]
+            ship.row = random.choice(available_rows)
+            x = ship.column
+            for i in range(ship.length):
+                ship_coordinates.append((x, ship.row))
+                x += 1
+            print(ship.name, ship_coordinates)
+            if all(coord in available_cells for coord in ship_coordinates):
+                return ship_coordinates
+            else:
+                return self.randomize_ship_coordinates(columns, rows, ship, available_cells)
 
 
 def display_text():
@@ -219,12 +252,6 @@ def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock):
                 pygame.quit()
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN:
-
-                if player_grid.rect.collidepoint(event.pos):
-                    player_grid.get_cell()
-                elif enemy_grid.rect.collidepoint(event.pos):
-                    enemy_grid.get_cell()
-
                 if selected is None:  # First click selects the ship and will start dragging
                     for i, ship in enumerate(ship_list):
                         if ship.rect.collidepoint(event.pos):
@@ -293,6 +320,7 @@ def lock_in_ships(player_grid, setting_up, ship_list):
         # clear the ship attribute from all cells
         for cell in player_grid.cells:
             cell.ship = None
+            # TODO flash message advising ship setup incorrect for lock in
     return setting_up
 
 
@@ -316,7 +344,7 @@ def main():
     button_list.add(rotate_button)
     button_list.add(lock_in_button)
 
-    enemy = EnemyAi()
+    enemy = EnemyAi(enemy_grid)
     enemy.print_ships()
     enemy.randomise_ships()
 
