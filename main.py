@@ -160,13 +160,20 @@ class EnemyAi:
     def randomise_ships(self):
         rows = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         columns = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        ship_coord_mapping = {}
         grid = itertools.product(rows, columns)
         available_cells = [cell for cell in grid]
         for ship in self.ships:
             ship_coordinates = self.randomize_ship_coordinates(columns, rows, ship, available_cells)
             cells_minus_ship = [cell for cell in available_cells if cell not in ship_coordinates]
+            ship_coord_mapping[ship.name] = ship_coordinates
             available_cells = cells_minus_ship
-        print(available_cells)
+            self.grid.update_cells_with_ship(starting_x=ship.column,
+                                             starting_y=ship.row,
+                                             shipname=ship.name,
+                                             length=ship.length,
+                                             horizontal=ship.horizontal)
+
 
     def randomize_ship_coordinates(self, columns, rows, ship, available_cells):
         ship.horizontal = random.choice([True, False])
@@ -192,6 +199,7 @@ class EnemyAi:
         if all(coord in available_cells for coord in ship_coordinates):
             return ship_coordinates
         else:
+            #  If any ship in a cell already taken, try again
             return self.randomize_ship_coordinates(columns, rows, ship, available_cells)
 
 
