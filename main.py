@@ -164,34 +164,35 @@ class EnemyAi:
         available_cells = [cell for cell in grid]
         for ship in self.ships:
             ship_coordinates = self.randomize_ship_coordinates(columns, rows, ship, available_cells)
-            available_cells = [cell for cell in available_cells if cell not in ship_coordinates]
+            cells_minus_ship = [cell for cell in available_cells if cell not in ship_coordinates]
+            available_cells = cells_minus_ship
         print(available_cells)
 
     def randomize_ship_coordinates(self, columns, rows, ship, available_cells):
         ship.horizontal = random.choice([True, False])
         ship_coordinates = []
         if ship.horizontal:
-            ship.row = random.choice(rows)
-            available_columns = columns[:-ship.length]
+            ship.row = random.choice(rows)  # choose any y coordinate
+            available_columns = columns[:-ship.length]  # x coordinate only those which can contain ship's length
             ship.column = random.choice(available_columns)
-            y = ship.row
-            for i in range(ship.length):
-                ship_coordinates.append((ship.column, y))
-                y += 1
-            print(ship.name, ship_coordinates)
-        else:
-            ship.column = random.choice(columns)
-            available_rows = rows[:-ship.length]
-            ship.row = random.choice(available_rows)
             x = ship.column
             for i in range(ship.length):
                 ship_coordinates.append((x, ship.row))
                 x += 1
             print(ship.name, ship_coordinates)
-            if all(coord in available_cells for coord in ship_coordinates):
-                return ship_coordinates
-            else:
-                return self.randomize_ship_coordinates(columns, rows, ship, available_cells)
+        else:
+            ship.column = random.choice(columns)
+            available_rows = rows[:-ship.length]
+            ship.row = random.choice(available_rows)
+            y = ship.row
+            for i in range(ship.length):
+                ship_coordinates.append((ship.column, y))
+                y += 1
+            print(ship.name, ship_coordinates)
+        if all(coord in available_cells for coord in ship_coordinates):
+            return ship_coordinates
+        else:
+            return self.randomize_ship_coordinates(columns, rows, ship, available_cells)
 
 
 def display_text():
