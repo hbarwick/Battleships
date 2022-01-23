@@ -70,7 +70,9 @@ class Grid:
             if cell.x_coord < x < cell.x_coord + cell.cell_width:
                 if cell.y_coord < y < cell.y_coord + cell.cell_width:
                     print(cell.row, cell.column)
-                    cell.change_colour()
+                    cell = cell.cell_clicked()
+                    break
+        return cell
 
     def check_ship(self, ship_endpoint, horizontal):
         for cell in self.cells:
@@ -109,11 +111,13 @@ class Cell:
         self.ship = None
         self.is_clicked = False
 
-    def change_colour(self):
+    def cell_clicked(self):
         self.surface.fill(RED)
         window_surface.blit(self.surface, self.rect)
         pygame.display.flip()
         print(self.ship)
+        self.is_clicked = True
+        return self.rect.center
 
 
 class Ship(pygame.sprite.Sprite):
@@ -145,6 +149,14 @@ class Button(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.centery = y + 20
+
+
+class CellHit(pygame.sprite.Sprite):
+    def __init__(self, image: Path, rect_center):
+        super().__init__()
+        self.image = pygame.image.load(image)
+        self.rect = self.image.get_rect()
+        self.rect.center = (rect_center[0] + 1, rect_center[1] + 1)
 
 
 class EnemyAi:
@@ -238,6 +250,7 @@ def display_permanent_text():
     window_surface.blit(enemy_text, enemy_text_rect)
 
 def display_instruction(text):
+    """Displays instruction line at the bottom of the screen, pass 'text' to display"""
     instruction_font = pygame.font.SysFont(None, 42)
     instruction_text = instruction_font.render(text, True, WHITE, GREY)
     instruction_text_rect = instruction_text.get_rect()
@@ -258,7 +271,7 @@ def create_ships(ship_list):
         ship_y += 40
     ship_list.draw(window_surface)
 
-def refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text):
+def refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list):
     """Updates each graphical element to the main display"""
     window_surface.fill(GREY)
     window_surface.blit(player_grid.surface, player_grid.rect)
@@ -267,11 +280,14 @@ def refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_
     display_instruction(instruction_text)
     button_list.update()
     button_list.draw(window_surface)
+    hit_list.update()
+    hit_list.draw(window_surface)
     ship_list.update()
     ship_list.draw(window_surface)
     pygame.display.update()
 
-def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock):
+
+def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock, hit_list):
     """Game loop for the ship setup phase of the game"""
     setting_up = True
     selected = None
@@ -310,7 +326,7 @@ def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock):
                     ships[selected].rect.x = event.pos[0] + shipmove_x
                     ships[selected].rect.y = event.pos[1] + shipmove_y
 
-        refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text)
+        refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
         clock.tick(25)
 
 def lock_in_ships(player_grid, setting_up, ship_list):
@@ -365,6 +381,7 @@ def main():
     # Create sprite list groups
     ship_list = pygame.sprite.Group()
     button_list = pygame.sprite.Group()
+    hit_list = pygame.sprite.Group()
     create_ships(ship_list)
 
     # Create Buttons
@@ -379,11 +396,11 @@ def main():
     # Main game loop
 
     clock = pygame.time.Clock()
-    set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock)
+    set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock, hit_list)
     button_list.empty()
     instruction_text = "Ships locked in!"
-    refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text)
-    pygame.time.wait(3000)
+    refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
+    pygame.time.wait(1000)
 
     while True:
         player_turn = True
@@ -395,13 +412,15 @@ def main():
             elif event.type == MOUSEBUTTONDOWN:
                 if enemy_grid.rect.collidepoint(event.pos):
                     print("enemy grid clicked")
-                    enemy_grid.get_cell()
+                    cell = enemy_grid.get_cell()
+                    cell_hit = CellHit(Path(r".\sprites\miss.png"), cell)
+                    hit_list.add(cell_hit)
                     enemy_hit = enemy.enemy_turn()
                     instruction_text = f"Enemy attacked {enemy_hit}."
-                    refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text)
+                    refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
                     pygame.time.wait(2000)
 
-        refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text)
+        refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
 
 
 
