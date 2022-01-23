@@ -373,6 +373,14 @@ def lock_in_ships(player_grid, setting_up, ship_list):
             instruction_text = "Make sure all ships are fully on the grid and not overlapping!"
     return setting_up, instruction_text
 
+def check_for_win(grid):
+    for cell in grid.cells:
+        if cell.ship is not None:
+            print("checking for win")
+            print(cell.ship)
+            return False
+    return True
+
 def main():
     # Set up and draw the player and enemy grids
     player_grid = Grid()
@@ -406,7 +414,8 @@ def main():
     refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
     pygame.time.wait(1000)
 
-    while True:
+    playing = True
+    while playing:
         player_turn = True
         instruction_text = "Your go. Choose enemy cell to target."
         for event in pygame.event.get():
@@ -422,13 +431,20 @@ def main():
                         if cell_ship:  # ship name will be returned if there is a hit
                             hit_list.add(CellHit(Path(r".\sprites\hit.png"), cell_rect_center))
                             instruction_text = f"You hit the enemy's {cell_ship}!"
+
                             for ship in enemy.ships:
                                 if ship.name == cell.ship:
+                                    cell.ship = None
                                     print(ship.name, ship.length)
                                     ship.length -= 1
                                     if ship.length == 0:
                                         instruction_text = f"You sunk the enemy's {cell_ship}!"
-                                        pygame.time.wait(1000)
+                                        if check_for_win(enemy_grid):
+                                            instruction_text = "You sunk all the enemy's ships. You win!"
+                                            refresh_screen(player_grid, enemy_grid, button_list, ship_list,
+                                                           instruction_text, hit_list)
+                                            playing = False
+
 
                         else:
                             hit_list.add(CellHit(Path(r".\sprites\miss.png"), cell_rect_center))
