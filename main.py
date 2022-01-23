@@ -117,7 +117,7 @@ class Cell:
         pygame.display.flip()
         print(self.ship)
         self.is_clicked = True
-        return self.rect.center
+        return self.rect.center, self.ship
 
 
 class Ship(pygame.sprite.Sprite):
@@ -412,10 +412,18 @@ def main():
             elif event.type == MOUSEBUTTONDOWN:
                 if enemy_grid.rect.collidepoint(event.pos):
                     print("enemy grid clicked")
-                    cell = enemy_grid.get_cell()
-                    cell_hit = CellHit(Path(r".\sprites\miss.png"), cell)
-                    hit_list.add(cell_hit)
+                    cell_rect_center, cell_ship = enemy_grid.get_cell()
+                    if cell_ship:
+                        hit_list.add(CellHit(Path(r".\sprites\hit.png"), cell_rect_center))
+                        instruction_text = f"You hit the enemy's {cell_ship}!"
+                    else:
+                        hit_list.add(CellHit(Path(r".\sprites\miss.png"), cell_rect_center))
+                        instruction_text = "Miss!"
+                    refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
+                    pygame.time.wait(1000)
+
                     enemy_hit = enemy.enemy_turn()
+
                     instruction_text = f"Enemy attacked {enemy_hit}."
                     refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
                     pygame.time.wait(2000)
