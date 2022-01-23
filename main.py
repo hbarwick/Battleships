@@ -96,6 +96,12 @@ class Grid:
             if cell_coords in ship_coords:
                 cell.ship = shipname
 
+    def return_cell(self, coordinates: tuple):
+        for cell in self.cells:
+            if cell.column == coordinates[0]:
+                if cell.row == coordinates[1]:
+                    return cell
+
 
 class Cell:
     def __init__(self, x_coord: int, y_coord: int, cell_width: int, row: int, column: int):
@@ -280,10 +286,10 @@ def refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_
     display_instruction(instruction_text)
     button_list.update()
     button_list.draw(window_surface)
-    hit_list.update()
-    hit_list.draw(window_surface)
     ship_list.update()
     ship_list.draw(window_surface)
+    hit_list.update()
+    hit_list.draw(window_surface)
     pygame.display.update()
 
 
@@ -411,9 +417,10 @@ def main():
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN:
                 if enemy_grid.rect.collidepoint(event.pos):
+                    # TODO make sure if cell already clicked it doesnt end player turn
                     print("enemy grid clicked")
                     cell_rect_center, cell_ship = enemy_grid.get_cell()
-                    if cell_ship:
+                    if cell_ship:  # ship name will be returned if there is a hit
                         hit_list.add(CellHit(Path(r".\sprites\hit.png"), cell_rect_center))
                         instruction_text = f"You hit the enemy's {cell_ship}!"
                     else:
@@ -423,10 +430,17 @@ def main():
                     pygame.time.wait(1000)
 
                     enemy_hit = enemy.enemy_turn()
+                    cell = player_grid.return_cell(enemy_hit)
+                    cell_rect_center, cell_ship = cell.cell_clicked()
+                    if cell_ship:  # ship name will be returned if there is a hit
+                        hit_list.add(CellHit(Path(r".\sprites\hit.png"), cell_rect_center))
+                        instruction_text = f"Enemy attacked, {cell_rect_center}. They hit your {cell_ship}!"
+                    else:
+                        hit_list.add(CellHit(Path(r".\sprites\miss.png"), cell_rect_center))
+                        instruction_text = f"Enemy attacked, {enemy_hit}. They missed!"
 
-                    instruction_text = f"Enemy attacked {enemy_hit}."
                     refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
-                    pygame.time.wait(2000)
+                    pygame.time.wait(1000)
 
         refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
 
