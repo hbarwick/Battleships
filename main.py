@@ -152,10 +152,13 @@ class EnemyAi:
         self.grid = grid
         self.ships = [Ship(ship, SHIPS[ship][0], SHIPS[ship][1]) for ship in SHIPS]
         self.last_ship_hit = None
+        self.available_cells = self.populate_available_cells()
 
-    def print_ships(self):
-        for ship in self.ships:
-            print(ship.name)
+    def populate_available_cells(self):
+        rows = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        columns = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        grid = itertools.product(rows, columns)
+        return [cell for cell in grid]
 
     def randomise_ships(self):
         rows = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -202,11 +205,14 @@ class EnemyAi:
             #  If any ship in a cell already taken, try again
             return self.randomize_ship_coordinates(columns, rows, ship, available_cells)
 
-    def random_pick(self, player_grid):
-        pick = random.choice(player_grid.cells)
-        if pick.ship is not None:
-            pass
+    def random_pick(self):
+        return random.choice(self.available_cells)
 
+    def enemy_turn(self):
+        if not self.last_ship_hit:
+            pick = self.random_pick()
+        self.available_cells.remove(pick)
+        return pick
 
 
 def display_permanent_text():
@@ -368,7 +374,6 @@ def main():
     button_list.add(lock_in_button)
 
     enemy = EnemyAi(enemy_grid)
-    enemy.print_ships()
     enemy.randomise_ships()
 
     # Main game loop
@@ -391,6 +396,11 @@ def main():
                 if enemy_grid.rect.collidepoint(event.pos):
                     print("enemy grid clicked")
                     enemy_grid.get_cell()
+                    enemy_hit = enemy.enemy_turn()
+                    instruction_text = f"Enemy attacked {enemy_hit}."
+                    refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text)
+                    pygame.time.wait(2000)
+
         refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text)
 
 
