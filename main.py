@@ -333,6 +333,19 @@ def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock, 
         refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
         clock.tick(25)
 
+def play_sound(type):
+    if type == "hit":
+        explosion = random.choice([r".\sounds\boom1.mp3", r".\sounds\boom2.mp3", r".\sounds\boom3.mp3"])
+        explosion_sound = pygame.mixer.Sound(explosion)
+        pygame.mixer.Sound.play(explosion_sound)
+    elif type == "miss":
+        splash = random.choice([r".\sounds\splash1.mp3", r".\sounds\splash2.mp3", r".\sounds\splash3.mp3"])
+        splash_sound = pygame.mixer.Sound(splash)
+        pygame.mixer.Sound.play(splash_sound)
+    elif type == "sink":
+        splash_sound = pygame.mixer.Sound(r".\sounds\sink.mp3")
+        pygame.mixer.Sound.play(splash_sound)
+
 def lock_in_ships(player_grid, setting_up, ship_list):
     print("locking in...")
     for ship in ship_list.sprites():
@@ -381,7 +394,12 @@ def check_for_win(grid):
             return False
     return True
 
+def game_over():
+    print("Game Over")
+
 def main():
+    pygame.mixer.music.load(r".\sounds\valkyries.mid")
+    pygame.mixer.music.play()
     # Set up and draw the player and enemy grids
     player_grid = Grid()
     enemy_grid = Grid(x_loc=720)
@@ -424,14 +442,14 @@ def main():
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN:
                 if enemy_grid.rect.collidepoint(event.pos):
-                    print("enemy grid clicked")
-                    cell = enemy_grid.get_cell()
+                    # Check the cell clicked on to see if it had been clicked before
+                    cell = enemy_grid.get_cell()  
                     if not cell.is_clicked:
                         cell_rect_center, cell_ship = cell.cell_clicked()
                         if cell_ship:  # ship name will be returned if there is a hit
                             hit_list.add(CellHit(Path(r".\sprites\hit.png"), cell_rect_center))
+                            play_sound("hit")                           
                             instruction_text = f"You hit the enemy's {cell_ship}!"
-
                             for ship in enemy.ships:
                                 if ship.name == cell.ship:
                                     cell.ship = None
@@ -439,15 +457,16 @@ def main():
                                     ship.length -= 1
                                     if ship.length == 0:
                                         instruction_text = f"You sunk the enemy's {cell_ship}!"
+                                        play_sound("sink")
+                                        refresh_screen(player_grid, enemy_grid, button_list, ship_list,
+                                                       instruction_text, hit_list)
+                                        pygame.time.wait(2000)
                                         if check_for_win(enemy_grid):
                                             instruction_text = "You sunk all the enemy's ships. You win!"
-                                            refresh_screen(player_grid, enemy_grid, button_list, ship_list,
-                                                           instruction_text, hit_list)
-                                            playing = False
-
-
+                                            game_over()
                         else:
                             hit_list.add(CellHit(Path(r".\sprites\miss.png"), cell_rect_center))
+                            play_sound("miss")
                             instruction_text = "Miss!"
                         refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
                         pygame.time.wait(1000)
@@ -457,9 +476,11 @@ def main():
                         cell_rect_center, cell_ship = cell.cell_clicked()
                         if cell_ship:  # ship name will be returned if there is a hit
                             hit_list.add(CellHit(Path(r".\sprites\hit.png"), cell_rect_center))
+                            play_sound("hit")
                             instruction_text = f"Enemy attacked, {cell_rect_center}. They hit your {cell_ship}!"
                         else:
                             hit_list.add(CellHit(Path(r".\sprites\miss.png"), cell_rect_center))
+                            play_sound("miss")
                             instruction_text = f"Enemy attacked, {enemy_hit}. They missed!"
 
                         refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
