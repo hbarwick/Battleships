@@ -492,3 +492,9 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# TODO enemy win condition
+# TODO game over and play again
+# TODO enemy AI improvements
+# TODO start screen
+# TODO improve look of game
