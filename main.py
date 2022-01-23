@@ -19,7 +19,7 @@ SHIPS = {"Battleship": [5, r".\Sprites\Battleship5.png"],
          "Aeroplane": [1, r".\Sprites\Plane1.png"]}
 
 pygame.init()
-window_surface = pygame.display.set_mode((1160, 560), 0, 32)
+window_surface = pygame.display.set_mode((1160, 580), 0, 32)
 
 
 class Grid:
@@ -103,13 +103,12 @@ class Cell:
         self.row = row
         self.column = column
         self.rect = pygame.Rect(self.x_coord, self.y_coord,
-                                self.cell_width - 3, self.cell_width - 3)  # -3 to stop cell fill overlap with border
-        self.surface = pygame.Surface((self.cell_width - 4,
-                                       self.cell_width - 4))  # -4 to stop cell surface overlapping with cell borders
+                                self.cell_width, self.cell_width)
+        self.surface = pygame.Surface((self.cell_width,
+                                       self.cell_width))
         self.ship = None
+        self.is_clicked = False
 
-    # TODO if change_colour is required need to find better way to ensure complete fill,
-    # adding 3 pixels to the Cell rects caused bug on ship lock-in
     def change_colour(self):
         self.surface.fill(RED)
         window_surface.blit(self.surface, self.rect)
@@ -152,6 +151,7 @@ class EnemyAi:
     def __init__(self, grid):
         self.grid = grid
         self.ships = [Ship(ship, SHIPS[ship][0], SHIPS[ship][1]) for ship in SHIPS]
+        self.last_ship_hit = None
 
     def print_ships(self):
         for ship in self.ships:
@@ -202,8 +202,14 @@ class EnemyAi:
             #  If any ship in a cell already taken, try again
             return self.randomize_ship_coordinates(columns, rows, ship, available_cells)
 
+    def random_pick(self, player_grid):
+        pick = random.choice(player_grid.cells)
+        if pick.ship is not None:
+            pass
 
-def display_text():
+
+
+def display_permanent_text():
     title_font = pygame.font.SysFont(None, 42)
     title_text = title_font.render("Battleships!", True, BLACK, GREY)
     title_text_rect = title_text.get_rect()
@@ -225,11 +231,18 @@ def display_text():
     window_surface.blit(player_text, player_text_rect)
     window_surface.blit(enemy_text, enemy_text_rect)
 
+def display_instruction(text):
+    instruction_font = pygame.font.SysFont(None, 42)
+    instruction_text = instruction_font.render(text, True, WHITE, GREY)
+    instruction_text_rect = instruction_text.get_rect()
+    instruction_text_rect.centerx = 580
+    instruction_text_rect.centery = 530
+    window_surface.blit(instruction_text, instruction_text_rect)
 
 def create_ships(ship_list):
     """Creates the player's ship sprites from the SHIPS dict and draws to the area
     between the player and enemy grid"""
-    ship_y = 100
+    ship_y = 70
     ship_x = 480
     for ship in SHIPS:
         path = Path(SHIPS[ship][1])
@@ -239,22 +252,24 @@ def create_ships(ship_list):
         ship_y += 40
     ship_list.draw(window_surface)
 
-
-def refresh_screen(player_grid, enemy_grid, button_list, ship_list):
+def refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text):
+    """Updates each graphical element to the main display"""
     window_surface.fill(GREY)
     window_surface.blit(player_grid.surface, player_grid.rect)
     window_surface.blit(enemy_grid.surface, enemy_grid.rect)
-    display_text()
+    display_permanent_text()
+    display_instruction(instruction_text)
     button_list.update()
     button_list.draw(window_surface)
     ship_list.update()
     ship_list.draw(window_surface)
     pygame.display.update()
 
-
 def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock):
+    """Game loop for the ship setup phase of the game"""
     setting_up = True
     selected = None
+    instruction_text = "Move the ships to the player grid, then press 'Lock-in ships'"
     while setting_up:
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -272,7 +287,7 @@ def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock):
                         if sprite.rect.collidepoint(event.pos):
                             # Detect if the Lock in button has been clicked
                             if sprite.name == "lock-in":
-                                setting_up = lock_in_ships(player_grid, setting_up, ship_list)
+                                setting_up, instruction_text = lock_in_ships(player_grid, setting_up, ship_list)
                 else:
                     for sprite in button_list.sprites():
                         if sprite.rect.collidepoint(event.pos):
@@ -289,9 +304,8 @@ def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock):
                     ships[selected].rect.x = event.pos[0] + shipmove_x
                     ships[selected].rect.y = event.pos[1] + shipmove_y
 
-        refresh_screen(player_grid, enemy_grid, button_list, ship_list)
+        refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text)
         clock.tick(25)
-
 
 def lock_in_ships(player_grid, setting_up, ship_list):
     print("locking in...")
@@ -325,13 +339,13 @@ def lock_in_ships(player_grid, setting_up, ship_list):
     # End setup phase if ship check passes
     if ship_cell_total == ship_dict_total:
         setting_up = False
+        instruction_text = "Ships locked in!"
     else:
         # clear the ship attribute from all cells
         for cell in player_grid.cells:
             cell.ship = None
-            # TODO flash message advising ship setup incorrect for lock in
-    return setting_up
-
+            instruction_text = "Make sure all ships are fully on the grid and not overlapping!"
+    return setting_up, instruction_text
 
 def main():
     # Set up and draw the player and enemy grids
@@ -348,8 +362,8 @@ def main():
     create_ships(ship_list)
 
     # Create Buttons
-    rotate_button = Button("rotate", Path(r".\sprites\Rotate_button.png"), 500, 380)
-    lock_in_button = Button("lock-in", Path(r".\sprites\lock-in_button.png"), 500, 480)
+    rotate_button = Button("rotate", Path(r".\sprites\Rotate_button.png"), 500, 330)
+    lock_in_button = Button("lock-in", Path(r".\sprites\lock-in_button.png"), 500, 420)
     button_list.add(rotate_button)
     button_list.add(lock_in_button)
 
@@ -361,19 +375,24 @@ def main():
 
     clock = pygame.time.Clock()
     set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock)
+    button_list.empty()
+    instruction_text = "Ships locked in!"
+    refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text)
+    pygame.time.wait(3000)
 
     while True:
+        player_turn = True
+        instruction_text = "Your go. Choose enemy cell to target."
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN:
-                if player_grid.rect.collidepoint(event.pos):
-                    print("player grid clicked")
-                    player_grid.get_cell()
-                elif enemy_grid.rect.collidepoint(event.pos):
+                if enemy_grid.rect.collidepoint(event.pos):
                     print("enemy grid clicked")
                     enemy_grid.get_cell()
+        refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text)
+
 
 
 if __name__ == '__main__':
