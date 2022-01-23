@@ -424,9 +424,11 @@ def main():
                             instruction_text = f"You hit the enemy's {cell_ship}!"
                             for ship in enemy.ships:
                                 if ship.name == cell.ship:
+                                    print(ship.name, ship.length)
                                     ship.length -= 1
-                                if ship.length == 0:
-                                    instruction_text = f"You sunk the enemy's {cell_ship}!"
+                                    if ship.length == 0:
+                                        instruction_text = f"You sunk the enemy's {cell_ship}!"
+                                        pygame.time.wait(1000)
 
                         else:
                             hit_list.add(CellHit(Path(r".\sprites\miss.png"), cell_rect_center))
