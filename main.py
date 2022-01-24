@@ -478,6 +478,19 @@ def main():
                             hit_list.add(CellHit(Path(r".\sprites\hit.png"), cell_rect_center))
                             play_sound("hit")
                             instruction_text = f"Enemy attacked, {cell_rect_center}. They hit your {cell_ship}!"
+                            for ship in ship_list:
+                                if ship.name == cell.ship:
+                                    cell.ship = None
+                                    ship.length -= 1
+                                    if ship.length == 0:
+                                        instruction_text = f"Enemy sunk your {cell_ship}!"
+                                        play_sound("sink")
+                                        refresh_screen(player_grid, enemy_grid, button_list, ship_list,
+                                                       instruction_text, hit_list)
+                                        pygame.time.wait(2000)
+                                        if check_for_win(player_grid):
+                                            instruction_text = "Enemy sunk all your ships. You lose!"
+                                            game_over()
                         else:
                             hit_list.add(CellHit(Path(r".\sprites\miss.png"), cell_rect_center))
                             play_sound("miss")
@@ -493,7 +506,7 @@ def main():
 if __name__ == '__main__':
     main()
 
-# TODO enemy win condition
+
 # TODO game over and play again
 # TODO enemy AI improvements
 # TODO start screen
