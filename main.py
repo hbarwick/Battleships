@@ -177,6 +177,8 @@ class EnemyAi:
         return [cell for cell in grid]
 
     def randomise_ships(self):
+        """Creates a list to reflect coordinates of a 10x10 grid, then adds each of the ships in turn to
+        self.grid, removing the coordinates from the list so they cannot be used again."""
         rows = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         columns = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         ship_coord_mapping = {}
@@ -193,8 +195,10 @@ class EnemyAi:
                                              length=ship.length,
                                              horizontal=ship.horizontal)
 
-
-    def randomize_ship_coordinates(self, columns, rows, ship, available_cells):
+    def randomize_ship_coordinates(self, columns, rows, ship, available_cells) -> list:
+        """Produces a list of randomized ship coordinates for randomize_ships() to populate to the cells.
+        Checks that all coordinate pairs are in available_cells, and if not calls recursively until valid
+        Coordinate list is created."""
         ship.horizontal = random.choice([True, False])
         ship_coordinates = []
         if ship.horizontal:
@@ -218,7 +222,7 @@ class EnemyAi:
         if all(coord in available_cells for coord in ship_coordinates):
             return ship_coordinates
         else:
-            #  If any ship in a cell already taken, try again
+            #  If any ship in a cell already taken, re-call the function to try again
             return self.randomize_ship_coordinates(columns, rows, ship, available_cells)
 
     def random_pick(self):
