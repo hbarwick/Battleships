@@ -64,11 +64,9 @@ class Grid:
 
     def get_cell(self):
         x, y = pygame.mouse.get_pos()
-        print(f"Mouse click at {x}, {y}")
         for cell in self.cells:
             if cell.x_coord < x < cell.x_coord + cell.cell_width:
                 if cell.y_coord < y < cell.y_coord + cell.cell_width:
-                    print(cell.row, cell.column)
                     return cell
 
 
@@ -88,7 +86,6 @@ class Grid:
                 starting_x += 1
             else:
                 starting_y += 1
-        print(shipname, ship_coords)
         for cell in self.cells:
             cell_coords = (cell.row, cell.column)
             if cell_coords in ship_coords:
@@ -119,7 +116,6 @@ class Cell:
         self.surface.fill(RED)
         window_surface.blit(self.surface, self.rect)
         pygame.display.flip()
-        print(self.ship)
         self.is_clicked = True
         return self.rect.center, self.ship
 
@@ -167,7 +163,11 @@ class EnemyAi:
     def __init__(self, grid):
         self.grid = grid
         self.ships = [Ship(ship, SHIPS[ship][0], SHIPS[ship][1]) for ship in SHIPS]
-        self.last_ship_hit = None
+        self.ship_hit = None
+        self.second_hit = None
+        self.tested_no_hit = None
+        self.tested_no_hit_2 = None
+        self.check_distance = 1
         self.available_cells = self.populate_available_cells()
 
     def populate_available_cells(self):
@@ -175,6 +175,13 @@ class EnemyAi:
         columns = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         grid = itertools.product(rows, columns)
         return [cell for cell in grid]
+
+    def reset_hit_logs(self):
+        self.ship_hit = None
+        self.second_hit = None
+        self.tested_no_hit = None
+        self.tested_no_hit_2 = None
+        self.check_distance = 1
 
     def randomise_ships(self):
         """Creates a list to reflect coordinates of a 10x10 grid, then adds each of the ships in turn to
@@ -209,7 +216,6 @@ class EnemyAi:
             for i in range(ship.length):
                 ship_coordinates.append((x, ship.row))
                 x += 1
-            print(ship.name, ship_coordinates)
         else:
             ship.column = random.choice(columns)
             available_rows = rows[:-ship.length]
@@ -218,7 +224,6 @@ class EnemyAi:
             for i in range(ship.length):
                 ship_coordinates.append((ship.column, y))
                 y += 1
-            print(ship.name, ship_coordinates)
         if all(coord in available_cells for coord in ship_coordinates):
             return ship_coordinates
         else:
@@ -229,8 +234,43 @@ class EnemyAi:
         return random.choice(self.available_cells)
 
     def enemy_turn(self):
-        if not self.last_ship_hit:
+        if not self.ship_hit:
             pick = self.random_pick()
+            print(f"No ship hit, target {pick} chosen")
+        if self.tested_no_hit_2:  # If there has been 2 miss set second_hit back to none to go back to original targets
+            self.second_hit = None
+            print("Resetting second hit")
+        elif self.ship_hit and not self.second_hit:
+            next_targets = [(self.ship_hit[0] + 1, self.ship_hit[1]),
+                            (self.ship_hit[0] - 1, self.ship_hit[1]),
+                            (self.ship_hit[0], self.ship_hit[1] + 1),
+                            (self.ship_hit[0], self.ship_hit[1] - 1)]
+            next_targets_verified = [cell for cell in next_targets if cell in self.available_cells]
+            pick = random.choice(next_targets_verified)
+            print(f"choosing second target {pick}")
+        elif self.ship_hit and self.second_hit:
+            if self.ship_hit[0] == self.second_hit[0]:
+                next_targets = [(self.ship_hit[0], max(self.ship_hit[1], self.second_hit[1] + self.check_distance)),
+                                (self.ship_hit[0], min(self.ship_hit[1], self.second_hit[1] - self.check_distance))]
+                next_targets_verified = [cell for cell in next_targets if cell in self.available_cells]
+                if next_targets_verified:
+
+                    pick = random.choice(next_targets_verified)
+                    print(f"Pick {pick} chosen, on recursion {self.check_distance}")
+                else:
+                    self.check_distance += 1
+                    return self.enemy_turn()
+
+            else:
+                next_targets = [(max(self.ship_hit[0], self.second_hit[0] + self.check_distance), self.ship_hit[1]),
+                                (min(self.ship_hit[0], self.second_hit[0] - self.check_distance), self.ship_hit[1])]
+                next_targets_verified = [cell for cell in next_targets if cell in self.available_cells]
+                if next_targets_verified:
+                    pick = random.choice(next_targets_verified)
+                    print(f"Pick {pick} chosen, on recursion {self.check_distance}")
+                else:
+                    self.check_distance += 1
+                    return self.enemy_turn()
         self.available_cells.remove(pick)
         return pick
 
@@ -310,7 +350,6 @@ def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock, 
                     for i, ship in enumerate(ship_list):
                         if ship.rect.collidepoint(event.pos):
                             selected = i
-                            print(ship.name)
                             shipmove_x = ship.rect.x - event.pos[0]
                             shipmove_y = ship.rect.y - event.pos[1]
                     for sprite in button_list.sprites():
@@ -351,7 +390,6 @@ def play_sound(type):
         pygame.mixer.Sound.play(splash_sound)
 
 def lock_in_ships(player_grid, setting_up, ship_list):
-    print("locking in...")
     for ship in ship_list.sprites():
         if ship.horizontal:
             # Retrieve the details of the left/top cell the ship is on
@@ -393,8 +431,6 @@ def lock_in_ships(player_grid, setting_up, ship_list):
 def check_for_win(grid):
     for cell in grid.cells:
         if cell.ship is not None:
-            print("checking for win")
-            print(cell.ship)
             return False
     return True
 
@@ -447,7 +483,7 @@ def main():
             elif event.type == MOUSEBUTTONDOWN:
                 if enemy_grid.rect.collidepoint(event.pos):
                     # Check the cell clicked on to see if it had been clicked before
-                    cell = enemy_grid.get_cell()  
+                    cell = enemy_grid.get_cell()
                     if not cell.is_clicked:
                         cell_rect_center, cell_ship = cell.cell_clicked()
                         if cell_ship:  # ship name will be returned if there is a hit
@@ -457,7 +493,6 @@ def main():
                             for ship in enemy.ships:
                                 if ship.name == cell.ship:
                                     cell.ship = None
-                                    print(ship.name, ship.length)
                                     ship.length -= 1
                                     if ship.length == 0:
                                         instruction_text = f"You sunk the enemy's {cell_ship}!"
@@ -472,6 +507,16 @@ def main():
                             hit_list.add(CellHit(Path(r".\sprites\miss.png"), cell_rect_center))
                             play_sound("miss")
                             instruction_text = "Miss!"
+                            if enemy.ship_hit and enemy.second_hit:
+                                if not enemy.tested_no_hit:
+                                    # record the miss if 2 hits are logged
+                                    enemy.tested_no_hit = enemy_hit
+                                else:
+                                    # if a miss again after a miss already logged, this means the enemy is not
+                                    # correctly tracking a ship (eg if 2 ships next to each other)
+                                    # set tested_no_hit_2 to break out of the recursion to avoid crash
+                                    enemy.tested_no_hit_2 = enemy_hit
+
                         refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
                         pygame.time.wait(1000)
 
@@ -480,6 +525,10 @@ def main():
                         cell_rect_center, cell_ship = cell.cell_clicked()
                         if cell_ship:  # ship name will be returned if there is a hit
                             hit_list.add(CellHit(Path(r".\sprites\hit.png"), cell_rect_center))
+                            if not enemy.ship_hit:
+                                enemy.ship_hit = enemy_hit
+                            elif enemy.ship_hit:
+                                enemy.second_hit = enemy_hit
                             play_sound("hit")
                             instruction_text = f"Enemy attacked, {cell_rect_center}. They hit your {cell_ship}!"
                             for ship in ship_list:
@@ -489,6 +538,7 @@ def main():
                                     if ship.length == 0:
                                         instruction_text = f"Enemy sunk your {cell_ship}!"
                                         play_sound("sink")
+                                        enemy.reset_hit_logs()
                                         refresh_screen(player_grid, enemy_grid, button_list, ship_list,
                                                        instruction_text, hit_list)
                                         pygame.time.wait(2000)
