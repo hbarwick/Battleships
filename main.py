@@ -10,6 +10,8 @@ BLACK = (0, 0, 0)
 BLUE = (52, 140, 235)
 RED = (230, 15, 11)
 GREY = (107, 99, 99)
+DARK_GREY = (41, 41, 46)
+DARK_BLUE = (14, 19, 156)
 
 SHIPS = {"Battleship": [5, r".\Sprites\Battleship5.png"],
          "Cruiser": [4, r".\Sprites\Cruiser4.png"],
@@ -68,7 +70,6 @@ class Grid:
             if cell.x_coord < x < cell.x_coord + cell.cell_width:
                 if cell.y_coord < y < cell.y_coord + cell.cell_width:
                     return cell
-
 
     def check_ship(self, ship_endpoint, horizontal):
         for cell in self.cells:
@@ -290,36 +291,39 @@ class EnemyAi:
                     check_distance += 1
                     return self.pick_target_after_second_hit(check_distance)
 
+
 def display_permanent_text():
-    title_font = pygame.font.SysFont(None, 42)
-    title_text = title_font.render("Battleships!", True, BLACK, GREY)
+    title_font = pygame.font.Font(r".\fonts\INVASION2000.TTF", 60)
+    title_text = title_font.render("Battleships!", True, BLACK, None)
     title_text_rect = title_text.get_rect()
     title_text_rect.centerx = window_surface.get_rect().centerx
     title_text_rect.centery = 30
 
-    grid_header_font = pygame.font.SysFont(None, 35)
-    player_text = grid_header_font.render("Player Grid", True, BLACK, GREY)
+    grid_header_font = pygame.font.Font(r".\fonts\ARCADECLASSIC.TTF", 35)
+    player_text = grid_header_font.render("Player Grid", True, BLACK, None)
     player_text_rect = player_text.get_rect()
     player_text_rect.centerx = 240
-    player_text_rect.centery = 50
+    player_text_rect.centery = 60
 
-    enemy_text = grid_header_font.render("Enemy Grid", True, BLACK, GREY)
+    enemy_text = grid_header_font.render("Enemy Grid", True, BLACK, None)
     enemy_text_rect = enemy_text.get_rect()
     enemy_text_rect.centerx = 920
-    enemy_text_rect.centery = 50
+    enemy_text_rect.centery = 60
 
     window_surface.blit(title_text, title_text_rect)
     window_surface.blit(player_text, player_text_rect)
     window_surface.blit(enemy_text, enemy_text_rect)
 
-def display_instruction(text):
+
+def display_instruction(text, colour=WHITE):
     """Displays instruction line at the bottom of the screen, pass 'text' to display"""
     instruction_font = pygame.font.SysFont(None, 42)
-    instruction_text = instruction_font.render(text, True, WHITE, GREY)
+    instruction_text = instruction_font.render(text, True, colour, GREY)
     instruction_text_rect = instruction_text.get_rect()
     instruction_text_rect.centerx = 580
     instruction_text_rect.centery = 530
     window_surface.blit(instruction_text, instruction_text_rect)
+
 
 def create_ships(ship_list):
     """Creates the player's ship sprites from the SHIPS dict and draws to the area
@@ -334,13 +338,15 @@ def create_ships(ship_list):
         ship_y += 40
     ship_list.draw(window_surface)
 
-def refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list):
+
+def refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list, instruction_colour=WHITE):
     """Updates each graphical element to the main display"""
     window_surface.fill(GREY)
+    draw_lines()
     window_surface.blit(player_grid.surface, player_grid.rect)
     window_surface.blit(enemy_grid.surface, enemy_grid.rect)
     display_permanent_text()
-    display_instruction(instruction_text)
+    display_instruction(instruction_text, instruction_colour)
     button_list.update()
     button_list.draw(window_surface)
     ship_list.update()
@@ -391,6 +397,7 @@ def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock, 
         refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
         clock.tick(25)
 
+
 def play_sound(type):
     if type == "hit":
         explosion = random.choice([r".\sounds\boom1.mp3", r".\sounds\boom2.mp3", r".\sounds\boom3.mp3"])
@@ -403,6 +410,7 @@ def play_sound(type):
     elif type == "sink":
         splash_sound = pygame.mixer.Sound(r".\sounds\sink.mp3")
         pygame.mixer.Sound.play(splash_sound)
+
 
 def lock_in_ships(player_grid, setting_up, ship_list):
     for ship in ship_list.sprites():
@@ -443,14 +451,22 @@ def lock_in_ships(player_grid, setting_up, ship_list):
             instruction_text = "Make sure all ships are fully on the grid and not overlapping!"
     return setting_up, instruction_text
 
+
 def check_for_win(grid):
     for cell in grid.cells:
         if cell.ship is not None:
             return False
     return True
 
+
 def game_over():
     print("Game Over")
+
+def draw_lines():
+    pygame.draw.line(window_surface, DARK_GREY, (10, 10), (1150, 10))
+    pygame.draw.line(window_surface, DARK_GREY, (1150, 10), (1150, 570))
+    pygame.draw.line(window_surface, DARK_GREY, (1150, 570), (10, 570))
+    pygame.draw.line(window_surface, DARK_GREY, (10, 10), (10, 570))
 
 def main():
     pygame.mixer.music.load(r".\sounds\valkyries.mid")
@@ -506,7 +522,7 @@ def main():
                         cell_rect_center, cell_ship = cell.cell_clicked()
                         if cell_ship:  # ship name will be returned if there is a hit
                             hit_list.add(CellHit(Path(r".\sprites\hit.png"), cell_rect_center))
-                            play_sound("hit")                           
+                            play_sound("hit")
                             instruction_text = f"You hit the enemy's {cell_ship}!"
                             for ship in enemy.ships:
                                 if ship.name == cell.ship:
@@ -516,7 +532,7 @@ def main():
                                         instruction_text = f"You sunk the enemy's {cell_ship}!"
                                         play_sound("sink")
                                         refresh_screen(player_grid, enemy_grid, button_list, ship_list,
-                                                       instruction_text, hit_list)
+                                                       instruction_text, hit_list, instruction_colour=RED)
                                         pygame.time.wait(2000)
                                         if check_for_win(enemy_grid):
                                             instruction_text = "You sunk all the enemy's ships. You win!"
@@ -525,7 +541,6 @@ def main():
                             hit_list.add(CellHit(Path(r".\sprites\miss.png"), cell_rect_center))
                             play_sound("miss")
                             instruction_text = "Miss!"
-
 
                         refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
                         pygame.time.wait(1000)
@@ -552,7 +567,7 @@ def main():
                                         play_sound("sink")
                                         enemy.reset_hit_logs()
                                         refresh_screen(player_grid, enemy_grid, button_list, ship_list,
-                                                       instruction_text, hit_list)
+                                                       instruction_text, hit_list, instruction_colour=RED)
                                         pygame.time.wait(2000)
                                         if check_for_win(player_grid):
                                             instruction_text = "Enemy sunk all your ships. You lose!"
@@ -580,12 +595,9 @@ def main():
         refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
 
 
-
 if __name__ == '__main__':
     main()
 
-
 # TODO game over and play again
-# TODO enemy AI improvements
 # TODO start screen
 # TODO improve look of game
