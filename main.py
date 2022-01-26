@@ -316,13 +316,13 @@ class EnemyAi:
 
 def display_permanent_text():
     """Displays game title and grid headers."""
-    title_font = pygame.font.Font(r".\fonts\INVASION2000.TTF", 60)
+    title_font = pygame.font.Font(r".\Fonts\INVASION2000.TTF", 60)
     title_text = title_font.render("Battleships!", True, BLACK, None)
     title_text_rect = title_text.get_rect()
     title_text_rect.centerx = window_surface.get_rect().centerx
     title_text_rect.centery = 38
 
-    grid_header_font = pygame.font.Font(r".\fonts\ARCADECLASSIC.TTF", 35)
+    grid_header_font = pygame.font.Font(r".\Fonts\ARCADECLASSIC.TTF", 35)
     player_text = grid_header_font.render("Player Grid", True, BLACK, None)
     player_text_rect = player_text.get_rect()
     player_text_rect.centerx = 240
@@ -422,15 +422,15 @@ def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, hit_lis
 
 def play_sound(effect_type):
     if effect_type == "hit":
-        explosion = random.choice([r".\sounds\boom1.mp3", r".\sounds\boom2.mp3", r".\sounds\boom3.mp3"])
+        explosion = random.choice([r".\Sounds\boom1.mp3", r".\Sounds\boom2.mp3", r".\Sounds\boom3.mp3"])
         explosion_sound = pygame.mixer.Sound(explosion)
         pygame.mixer.Sound.play(explosion_sound)
     elif effect_type == "miss":
-        splash = random.choice([r".\sounds\splash1.mp3", r".\sounds\splash2.mp3", r".\sounds\splash3.mp3"])
+        splash = random.choice([r".\Sounds\splash1.mp3", r".\Sounds\splash2.mp3", r".\Sounds\splash3.mp3"])
         splash_sound = pygame.mixer.Sound(splash)
         pygame.mixer.Sound.play(splash_sound)
     elif effect_type == "sink":
-        splash_sound = pygame.mixer.Sound(r".\sounds\sink.mp3")
+        splash_sound = pygame.mixer.Sound(r".\Sounds\sink.mp3")
         pygame.mixer.Sound.play(splash_sound)
 
 
@@ -489,7 +489,7 @@ def game_over(win: bool):
     """Game over screen, displays different text based on result.
     Exits or restarts game based on click location"""
     window_surface.fill(GREY)
-    title_font = pygame.font.Font(r".\fonts\INVASION2000.TTF", 80)
+    title_font = pygame.font.Font(r".\Fonts\INVASION2000.TTF", 80)
     if win:
         game_over_text = title_font.render("You Win!", True, BLACK, None)
     else:
@@ -498,7 +498,7 @@ def game_over(win: bool):
     game_over_text_rect.centerx = 580
     game_over_text_rect.centery = 200
 
-    body_font = pygame.font.Font(r".\fonts\INVASION2000.TTF", 35)
+    body_font = pygame.font.Font(r".\Fonts\INVASION2000.TTF", 35)
     play_again_text = body_font.render("Play again?", True, BLACK, None)
     play_again_text_rect = play_again_text.get_rect()
     play_again_text_rect.centerx = 580
@@ -536,7 +536,7 @@ def draw_lines():
 
 
 def main():
-    pygame.mixer.music.load(r".\sounds\valkyries.mid")
+    pygame.mixer.music.load(r".\Sounds\valkyries.mid")
     pygame.mixer.music.play()
     # Set up and draw the player and enemy grids
     player_grid = Grid()
@@ -553,8 +553,8 @@ def main():
     create_ships(ship_list)
 
     # Create Buttons
-    rotate_button = Button("rotate", Path(r".\sprites\Rotate_button.png"), 500, 330)
-    lock_in_button = Button("lock-in", Path(r".\sprites\lock-in_button.png"), 500, 420)
+    rotate_button = Button("rotate", Path(r".\Sprites\Rotate_button.png"), 500, 330)
+    lock_in_button = Button("lock-in", Path(r".\Sprites\lock-in_button.png"), 500, 420)
     button_list.add(rotate_button)
     button_list.add(lock_in_button)
 
@@ -586,7 +586,7 @@ def main():
                     if not cell.is_clicked:
                         cell_rect_center, cell_ship = cell.cell_clicked()
                         if cell_ship:  # ship name will be returned if there is a hit
-                            hit_list.add(CellHit(Path(r".\sprites\hit.png"), cell_rect_center))
+                            hit_list.add(CellHit(Path(r".\Sprites\hit.png"), cell_rect_center))
                             play_sound("hit")
                             instruction_text = f"You hit the enemy's {cell_ship}!"
                             for ship in enemy.ships:
@@ -609,7 +609,7 @@ def main():
                                                 hit_list.empty()
                                                 main()
                         else:
-                            hit_list.add(CellHit(Path(r".\sprites\miss.png"), cell_rect_center))
+                            hit_list.add(CellHit(Path(r".\Sprites\miss.png"), cell_rect_center))
                             play_sound("miss")
                             instruction_text = "Miss!"
 
@@ -620,7 +620,7 @@ def main():
                         cell = player_grid.return_cell(enemy_hit)
                         cell_rect_center, cell_ship = cell.cell_clicked()
                         if cell_ship:  # ship name will be returned if there is a hit
-                            hit_list.add(CellHit(Path(r".\sprites\hit.png"), cell_rect_center))
+                            hit_list.add(CellHit(Path(r".\Sprites\hit.png"), cell_rect_center))
                             if not enemy.ship_hit:
                                 enemy.ship_hit = enemy_hit
                             elif enemy.ship_hit:
@@ -649,7 +649,7 @@ def main():
                                                 hit_list.empty()
                                                 main()
                         else:
-                            hit_list.add(CellHit(Path(r".\sprites\miss.png"), cell_rect_center))
+                            hit_list.add(CellHit(Path(r".\Sprites\miss.png"), cell_rect_center))
                             play_sound("miss")
                             instruction_text = f"Enemy attacked, x{enemy_hit[0]} : y{enemy_hit[1]}. They missed!"
                             if enemy.ship_hit and enemy.second_hit:
