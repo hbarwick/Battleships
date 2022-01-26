@@ -553,8 +553,8 @@ def main():
     create_ships(ship_list)
 
     # Create Buttons
-    rotate_button = Button("rotate", Path(r".\sprites\Rotate_button2.png"), 500, 330)
-    lock_in_button = Button("lock-in", Path(r".\sprites\lock-in_button2.png"), 500, 420)
+    rotate_button = Button("rotate", Path(r".\sprites\Rotate_button.png"), 500, 330)
+    lock_in_button = Button("lock-in", Path(r".\sprites\lock-in_button.png"), 500, 420)
     button_list.add(rotate_button)
     button_list.add(lock_in_button)
 
@@ -564,7 +564,7 @@ def main():
     # Main game loop
 
     clock = pygame.time.Clock()
-    set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock, hit_list)
+    set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, hit_list)
     button_list.empty()
     instruction_text = "Ships locked in!"
     refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
@@ -581,7 +581,7 @@ def main():
                 if enemy_grid.rect.collidepoint(event.pos):
                     # Check the cell clicked on to see if it had been clicked before
                     cell = None
-                    while not cell:
+                    while cell is None:
                         x, y = pygame.mouse.get_pos()
                         cell = enemy_grid.get_cell(x, y)
                     if not cell.is_clicked:
