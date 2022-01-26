@@ -1,3 +1,5 @@
+# Battleships in Pygame
+
 from pathlib import Path
 import itertools
 import sys
@@ -11,7 +13,6 @@ BLUE = (52, 140, 235)
 RED = (206, 10, 10)
 GREY = (107, 99, 99)
 DARK_GREY = (41, 41, 46)
-DARK_BLUE = (14, 19, 156)
 
 # SHIPS = {"Battleship": [5, r".\Sprites\Battleship5.png"],
 #          "Cruiser": [4, r".\Sprites\Cruiser4.png"],
@@ -28,6 +29,8 @@ window_surface = pygame.display.set_mode((1160, 580), 0, 32)
 
 
 class Grid:
+    """Container class for cell objects, performs checks and updates to the cells,
+    also responsible for drawing the grid to the display window,"""
     def __init__(self, num_rows=10,
                  num_cols=10,
                  cell_width=40,
@@ -45,6 +48,7 @@ class Grid:
         self.cells = []
 
     def draw_grid(self):
+        """Draws grid to the display screen based on the self parameters of the grid object."""
         self.surface.fill(BLUE)
         grid_x = 0
         grid_y = 0
@@ -55,6 +59,7 @@ class Grid:
             grid_y += self.cell_width
 
     def create_cells(self):
+        """Builds list of self.cells based on the dimensions of grid object."""
         cell_y = self.y_loc
         for col in range(self.num_rows):
             cell_x = self.x_loc
@@ -68,6 +73,7 @@ class Grid:
             cell_y += self.cell_width
 
     def get_cell(self, x, y):
+        """Returns the matching cell object when supplied with x,y coordinates (from mouse click)"""
         for cell in self.cells:
             if cell.x_coord < x < cell.x_coord + cell.cell_width:
                 if cell.y_coord < y < cell.y_coord + cell.cell_width:
@@ -232,23 +238,22 @@ class EnemyAi:
         return random.choice(self.available_cells)
 
     def enemy_turn(self):
-        print("---Starting attributes---")
-        print(f"Ship Hit = {self.ship_hit}")
-        print(f"Second Hit = {self.second_hit}")
-        print(f"Tested no hit = {self.tested_no_hit}")
-        print(f"Tested no hit2= {self.tested_no_hit_2}")
+        # If no hits have been registered, pick any random available cell
         if not self.ship_hit:
             pick = self.random_pick()
-        elif self.tested_no_hit_2:  # If there has been 2 miss set second_hit back to none to go back to original targets
+        # If there have been 2 misses after 2 logged hits set second_hit back to none to go back to the original targets
+        elif self.tested_no_hit_2:
             self.second_hit = None
             print("Resetting second hit")
             return self.pick_target_after_first_hit()
+        # After the first successful hit, check the adjacent cells
         elif self.ship_hit and not self.second_hit:
             pick = self.pick_target_after_first_hit()
+        # If two successful hits, check in a line extending outwards from those hits
         elif self.ship_hit and self.second_hit:
             pick = self.pick_target_after_second_hit(1)
+        # Catchall in case unable to choose valid location, goes back to choosing a random target
         else:
-            print("no move in ai")
             pick = self.random_pick()
         self.available_cells.remove(pick)
         return pick
