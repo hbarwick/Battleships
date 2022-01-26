@@ -8,7 +8,7 @@ from pygame.locals import *
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 BLUE = (52, 140, 235)
-RED = (230, 15, 11)
+RED = (206, 10, 10)
 GREY = (107, 99, 99)
 DARK_GREY = (41, 41, 46)
 DARK_BLUE = (14, 19, 156)
@@ -25,6 +25,7 @@ window_surface = pygame.display.set_mode((1160, 580), 0, 32)
 
 
 class Grid:
+    """"""
     def __init__(self, num_rows=10,
                  num_cols=10,
                  cell_width=40,
@@ -114,9 +115,6 @@ class Cell:
         self.is_clicked = False
 
     def cell_clicked(self):
-        self.surface.fill(RED)
-        window_surface.blit(self.surface, self.rect)
-        pygame.display.flip()
         self.is_clicked = True
         return self.rect.center, self.ship
 
@@ -297,7 +295,7 @@ def display_permanent_text():
     title_text = title_font.render("Battleships!", True, BLACK, None)
     title_text_rect = title_text.get_rect()
     title_text_rect.centerx = window_surface.get_rect().centerx
-    title_text_rect.centery = 30
+    title_text_rect.centery = 38
 
     grid_header_font = pygame.font.Font(r".\fonts\ARCADECLASSIC.TTF", 35)
     player_text = grid_header_font.render("Player Grid", True, BLACK, None)
@@ -321,7 +319,7 @@ def display_instruction(text, colour=WHITE):
     instruction_text = instruction_font.render(text, True, colour, GREY)
     instruction_text_rect = instruction_text.get_rect()
     instruction_text_rect.centerx = 580
-    instruction_text_rect.centery = 530
+    instruction_text_rect.centery = 535
     window_surface.blit(instruction_text, instruction_text_rect)
 
 
@@ -367,6 +365,7 @@ def set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, clock, 
                 pygame.quit()
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN:
+                print(event.pos[0], event.pos[1])
                 if selected is None:  # First click selects the ship and will start dragging
                     for i, ship in enumerate(ship_list):
                         if ship.rect.collidepoint(event.pos):
@@ -467,6 +466,7 @@ def draw_lines():
     pygame.draw.line(window_surface, DARK_GREY, (1150, 10), (1150, 570))
     pygame.draw.line(window_surface, DARK_GREY, (1150, 570), (10, 570))
     pygame.draw.line(window_surface, DARK_GREY, (10, 10), (10, 570))
+    pygame.draw.line(window_surface, DARK_GREY, (10, 500), (1150, 500))
 
 def main():
     pygame.mixer.music.load(r".\sounds\valkyries.mid")
@@ -486,8 +486,8 @@ def main():
     create_ships(ship_list)
 
     # Create Buttons
-    rotate_button = Button("rotate", Path(r".\sprites\Rotate_button.png"), 500, 330)
-    lock_in_button = Button("lock-in", Path(r".\sprites\lock-in_button.png"), 500, 420)
+    rotate_button = Button("rotate", Path(r".\sprites\Rotate_button2.png"), 500, 330)
+    lock_in_button = Button("lock-in", Path(r".\sprites\lock-in_button2.png"), 500, 420)
     button_list.add(rotate_button)
     button_list.add(lock_in_button)
 
@@ -505,7 +505,6 @@ def main():
 
     playing = True
     while playing:
-        player_turn = True
         instruction_text = "Your go. Choose enemy cell to target."
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -516,6 +515,7 @@ def main():
                     # Check the cell clicked on to see if it had been clicked before
                     cell = None
                     while not cell:
+                        print("Stuck in a loop")
                         cell = enemy_grid.get_cell()
                     print(cell)
                     if not cell.is_clicked:
@@ -557,7 +557,7 @@ def main():
                                 print("elif enemy.ship_hit:")
                                 enemy.second_hit = enemy_hit
                             play_sound("hit")
-                            instruction_text = f"Enemy attacked, {cell_rect_center}. They hit your {cell_ship}!"
+                            instruction_text = f"Enemy attacked, x{enemy_hit[0]} : y{enemy_hit[1]}. They hit your {cell_ship}!"
                             for ship in ship_list:
                                 if ship.name == cell.ship:
                                     cell.ship = None
@@ -575,8 +575,7 @@ def main():
                         else:
                             hit_list.add(CellHit(Path(r".\sprites\miss.png"), cell_rect_center))
                             play_sound("miss")
-                            instruction_text = f"Enemy attacked, {enemy_hit}. They missed!"
-                            print(f"Enemy hit = {enemy_hit}")
+                            instruction_text = f"Enemy attacked, x{enemy_hit[0]} : y{enemy_hit[1]}. They missed!"
                             if enemy.ship_hit and enemy.second_hit:
                                 if not enemy.tested_no_hit:
                                     print("if not enemy.tested_no_hit:")
