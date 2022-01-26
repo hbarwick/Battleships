@@ -13,19 +13,21 @@ GREY = (107, 99, 99)
 DARK_GREY = (41, 41, 46)
 DARK_BLUE = (14, 19, 156)
 
+# SHIPS = {"Battleship": [5, r".\Sprites\Battleship5.png"],
+#          "Cruiser": [4, r".\Sprites\Cruiser4.png"],
+#          "Submarine": [4, r".\Sprites\Submarine3.png"],
+#          "Rescue Ship": [3, r".\Sprites\RescueShip3.png"],
+#          "Destroyer": [2, r".\Sprites\Destroyer2.png"],
+#          "Aeroplane": [1, r".\Sprites\Plane1.png"]}
+
 SHIPS = {"Battleship": [5, r".\Sprites\Battleship5.png"],
-         "Cruiser": [4, r".\Sprites\Cruiser4.png"],
-         "Submarine": [4, r".\Sprites\Submarine3.png"],
-         "Rescue Ship": [3, r".\Sprites\RescueShip3.png"],
-         "Destroyer": [2, r".\Sprites\Destroyer2.png"],
-         "Aeroplane": [1, r".\Sprites\Plane1.png"]}
+         "Cruiser": [4, r".\Sprites\Cruiser4.png"]}
 
 pygame.init()
 window_surface = pygame.display.set_mode((1160, 580), 0, 32)
 
 
 class Grid:
-    """"""
     def __init__(self, num_rows=10,
                  num_cols=10,
                  cell_width=40,
@@ -65,8 +67,7 @@ class Grid:
                 cell_x += self.cell_width
             cell_y += self.cell_width
 
-    def get_cell(self):
-        x, y = pygame.mouse.get_pos()
+    def get_cell(self, x, y):
         for cell in self.cells:
             if cell.x_coord < x < cell.x_coord + cell.cell_width:
                 if cell.y_coord < y < cell.y_coord + cell.cell_width:
@@ -459,7 +460,41 @@ def check_for_win(grid):
 
 
 def game_over():
-    print("Game Over")
+    window_surface.fill(GREY)
+    title_font = pygame.font.Font(r".\fonts\INVASION2000.TTF", 80)
+    game_over_text = title_font.render("Game Over!", True, BLACK, None)
+    game_over_text_rect = game_over_text.get_rect()
+    game_over_text_rect.centerx = 580
+    game_over_text_rect.centery = 200
+
+    body_font = pygame.font.Font(r".\fonts\INVASION2000.TTF", 35)
+    play_again_text = body_font.render("Play again?", True, BLACK, None)
+    play_again_text_rect = play_again_text.get_rect()
+    play_again_text_rect.centerx = 580
+    play_again_text_rect.centery = 300
+
+    yes_no_text = body_font.render("Yes                 /                 No", True, BLACK, None)
+    yes_no_text_rect = yes_no_text.get_rect()
+    yes_no_text_rect.centerx = 580
+    yes_no_text_rect.centery = 400
+
+    window_surface.blit(game_over_text, game_over_text_rect)
+    window_surface.blit(play_again_text, play_again_text_rect)
+    window_surface.blit(yes_no_text, yes_no_text_rect)
+
+    pygame.display.update()
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == MOUSEBUTTONDOWN:
+                if event.pos[0] > 580:
+                    pygame.quit()
+                    sys.exit()
+                else:
+                    return True
+
 
 def draw_lines():
     pygame.draw.line(window_surface, DARK_GREY, (10, 10), (1150, 10))
@@ -469,6 +504,7 @@ def draw_lines():
     pygame.draw.line(window_surface, DARK_GREY, (10, 500), (1150, 500))
 
 def main():
+    game_over()
     pygame.mixer.music.load(r".\sounds\valkyries.mid")
     pygame.mixer.music.play()
     # Set up and draw the player and enemy grids
@@ -515,9 +551,8 @@ def main():
                     # Check the cell clicked on to see if it had been clicked before
                     cell = None
                     while not cell:
-                        print("Stuck in a loop")
-                        cell = enemy_grid.get_cell()
-                    print(cell)
+                        x, y = pygame.mouse.get_pos()
+                        cell = enemy_grid.get_cell(x, y)
                     if not cell.is_clicked:
                         cell_rect_center, cell_ship = cell.cell_clicked()
                         if cell_ship:  # ship name will be returned if there is a hit
@@ -536,7 +571,10 @@ def main():
                                         pygame.time.wait(2000)
                                         if check_for_win(enemy_grid):
                                             instruction_text = "You sunk all the enemy's ships. You win!"
-                                            game_over()
+                                            if game_over():
+                                                ship_list.empty()
+                                                hit_list.empty()
+                                                main()
                         else:
                             hit_list.add(CellHit(Path(r".\sprites\miss.png"), cell_rect_center))
                             play_sound("miss")
@@ -572,6 +610,9 @@ def main():
                                         if check_for_win(player_grid):
                                             instruction_text = "Enemy sunk all your ships. You lose!"
                                             game_over()
+                                            ship_list.empty()
+                                            hit_list.empty()
+                                            main()
                         else:
                             hit_list.add(CellHit(Path(r".\sprites\miss.png"), cell_rect_center))
                             play_sound("miss")
