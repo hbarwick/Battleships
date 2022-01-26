@@ -563,7 +563,6 @@ def main():
 
     # Main game loop
 
-    clock = pygame.time.Clock()
     set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, hit_list)
     button_list.empty()
     instruction_text = "Ships locked in!"
