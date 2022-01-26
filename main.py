@@ -52,7 +52,7 @@ class Grid:
         self.surface.fill(BLUE)
         grid_x = 0
         grid_y = 0
-        for i in range(self.num_cols + 1):
+        for _ in range(self.num_cols + 1):
             pygame.draw.line(self.surface, BLACK, (grid_x, 0), (grid_x, self.grid_size), 4)
             pygame.draw.line(self.surface, BLACK, (0, grid_y), (self.grid_size, grid_y), 4)
             grid_x += self.cell_width
@@ -217,7 +217,7 @@ class EnemyAi:
             available_columns = columns[:-ship.length]  # x coordinate only those which can contain ship's length
             ship.column = random.choice(available_columns)
             x = ship.column
-            for i in range(ship.length):
+            for _ in range(ship.length):
                 ship_coordinates.append((x, ship.row))
                 x += 1
         else:
@@ -225,7 +225,7 @@ class EnemyAi:
             available_rows = rows[:-ship.length]
             ship.row = random.choice(available_rows)
             y = ship.row
-            for i in range(ship.length):
+            for _ in range(ship.length):
                 ship_coordinates.append((ship.column, y))
                 y += 1
         if all(coord in available_cells for coord in ship_coordinates):
@@ -343,14 +343,14 @@ def create_ships(ship_list):
     ship_list.draw(window_surface)
 
 
-def refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list, instruction_colour=WHITE):
+def refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list, colour=WHITE):
     """Updates each graphical element to the main display"""
     window_surface.fill(GREY)
     draw_lines()
     window_surface.blit(player_grid.surface, player_grid.rect)
     window_surface.blit(enemy_grid.surface, enemy_grid.rect)
     display_permanent_text()
-    display_instruction(instruction_text, instruction_colour)
+    display_instruction(instruction_text, colour)
     button_list.update()
     button_list.draw(window_surface)
     ship_list.update()
@@ -572,7 +572,7 @@ def main():
                                         instruction_text = f"You sunk the enemy's {cell_ship}!"
                                         play_sound("sink")
                                         refresh_screen(player_grid, enemy_grid, button_list, ship_list,
-                                                       instruction_text, hit_list, instruction_colour=RED)
+                                                       instruction_text, hit_list, colour=RED)
                                         pygame.time.wait(2000)
                                         if check_for_win(enemy_grid):
                                             instruction_text = "You sunk all the enemy's ships. You win!"
@@ -610,7 +610,7 @@ def main():
                                         play_sound("sink")
                                         enemy.reset_hit_logs()
                                         refresh_screen(player_grid, enemy_grid, button_list, ship_list,
-                                                       instruction_text, hit_list, instruction_colour=RED)
+                                                       instruction_text, hit_list, colour=RED)
                                         pygame.time.wait(2000)
                                         if check_for_win(player_grid):
                                             instruction_text = "Enemy sunk all your ships. You lose!"
