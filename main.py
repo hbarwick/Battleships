@@ -582,11 +582,14 @@ def main():
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN:
                 if enemy_grid.rect.collidepoint(event.pos):
-                    # Check the cell clicked on to see if it had been clicked before
                     cell = None
                     while cell is None:
+                        # get_cell would occasionally return None and crash the program, so added this loop
+                        # in an attempt to ensure it contains a Cell before exiting loop.
+                        # However this has the effect instead of occasionally getting stuck in this loop.
                         x, y = pygame.mouse.get_pos()
                         cell = enemy_grid.get_cell(x, y)
+                    # Check the cell clicked on to see if it had been clicked before
                     if not cell.is_clicked:
                         cell_rect_center, cell_ship = cell.cell_clicked()
                         if cell_ship:  # ship name will be returned if there is a hit
