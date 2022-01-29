@@ -552,6 +552,8 @@ def main():
     enemy = EnemyAi(enemy_grid)
     enemy.randomise_ships()
 
+    clock = pygame.time.Clock()
+
     # Main game loop
 
     set_up_player_ships(player_grid, enemy_grid, ship_list, button_list, hit_list)
@@ -569,97 +571,101 @@ def main():
                 sys.exit()
             elif event.type == MOUSEBUTTONDOWN:
                 if enemy_grid.rect.collidepoint(event.pos):
-                    cell = None
-                    while cell is None:
-                        # get_cell would occasionally return None and crash the program, so added this loop
-                        # in an attempt to ensure it contains a Cell before exiting loop.
-                        # However this has the effect instead of occasionally getting stuck in this loop.
-                        x, y = pygame.mouse.get_pos()
-                        cell = enemy_grid.get_cell(x, y)
-                    # Check the cell clicked on to see if it had been clicked before
-                    if not cell.is_clicked:
-                        cell_rect_center, cell_ship = cell.cell_clicked()
-                        if cell_ship:  # ship name will be returned if there is a hit
-                            hit_list.add(CellHit(Path(r"./Sprites/hit.png"), cell_rect_center))
-                            play_sound("hit")
-                            instruction_text = f"You hit the enemy's {cell_ship}!"
-                            for ship in enemy.ships:
-                                if ship.name == cell.ship:
-                                    cell.ship = None
-                                    ship.length -= 1
-                                    if ship.length == 0:
-                                        instruction_text = f"You sunk the enemy's {cell_ship}!"
-                                        play_sound("sink")
-                                        refresh_screen(player_grid, enemy_grid, button_list, ship_list,
-                                                       instruction_text, hit_list, colour=RED)
-                                        pygame.time.wait(2000)
-                                        if check_for_win(enemy_grid):
-                                            instruction_text = "You sunk all the enemy's ships. You win!"
-                                            refresh_screen(player_grid, enemy_grid, button_list, ship_list,
-                                                           instruction_text, hit_list, colour=RED)
-                                            pygame.time.wait(2000)
-                                            if game_over(True):
-                                                ship_list.empty()
-                                                hit_list.empty()
-                                                main()
-                        else:
-                            hit_list.add(CellHit(Path(r"./Sprites/miss.png"), cell_rect_center))
-                            play_sound("miss")
-                            instruction_text = "Miss!"
-
-                        refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
-                        pygame.time.wait(1000)
-
-                        enemy_hit = enemy.enemy_turn()
-                        cell = player_grid.return_cell(enemy_hit)
-                        cell_rect_center, cell_ship = cell.cell_clicked()
-                        if cell_ship:  # ship name will be returned if there is a hit
-                            hit_list.add(CellHit(Path(r"./Sprites/hit.png"), cell_rect_center))
-                            if not enemy.ship_hit:
-                                enemy.ship_hit = enemy_hit
-                            elif enemy.ship_hit:
-                                enemy.second_hit = enemy_hit
-                            play_sound("hit")
-                            instruction_text = f"Enemy attacked, x{enemy_hit[0]} : y{enemy_hit[1]}. " \
-                                               f"They hit your {cell_ship}!"
-                            for ship in ship_list:
-                                if ship.name == cell.ship:
-                                    cell.ship = None
-                                    ship.length -= 1
-                                    if ship.length == 0:
-                                        instruction_text = f"Enemy sunk your {cell_ship}!"
-                                        play_sound("sink")
-                                        enemy.reset_hit_logs()
-                                        refresh_screen(player_grid, enemy_grid, button_list, ship_list,
-                                                       instruction_text, hit_list, colour=RED)
-                                        pygame.time.wait(2000)
-                                        if check_for_win(player_grid):
-                                            instruction_text = "Enemy sunk all your ships. You lose!"
-                                            refresh_screen(player_grid, enemy_grid, button_list, ship_list,
-                                                           instruction_text, hit_list, colour=RED)
-                                            pygame.time.wait(2000)
-                                            if game_over(False):
-                                                ship_list.empty()
-                                                hit_list.empty()
-                                                main()
-                        else:
-                            hit_list.add(CellHit(Path(r"./Sprites/miss.png"), cell_rect_center))
-                            play_sound("miss")
-                            instruction_text = f"Enemy attacked, x{enemy_hit[0]} : y{enemy_hit[1]}. They missed!"
-                            if enemy.ship_hit and enemy.second_hit:
-                                if not enemy.tested_no_hit:
-                                    # record the miss if 2 hits are logged
-                                    enemy.tested_no_hit = enemy_hit
-                                else:
-                                    # if a miss again after a miss already logged, this means the enemy is not
-                                    # correctly tracking a ship (eg if 2 ships next to each other)
-                                    # set tested_no_hit_2 to break out of the recursion to avoid crash
-                                    enemy.tested_no_hit_2 = enemy_hit
-
-                        refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
-                        pygame.time.wait(1000)
+                    instruction_text = enemy_cell_clicked(button_list, enemy, enemy_grid, hit_list, player_grid,
+                                                          ship_list, instruction_text)
+            else:
+                pygame.display.update()
 
         refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
+        clock.tick(30)
+
+
+def enemy_cell_clicked(button_list, enemy, enemy_grid, hit_list, player_grid, ship_list, instruction_text):
+    x, y = pygame.mouse.get_pos()
+    cell = enemy_grid.get_cell(x, y)
+    # Check the cell clicked on to see if it had been clicked before
+    if not cell.is_clicked:
+        cell_rect_center, cell_ship = cell.cell_clicked()
+        if cell_ship:  # ship name will be returned if there is a hit
+            hit_list.add(CellHit(Path(r"./Sprites/hit.png"), cell_rect_center))
+            play_sound("hit")
+            instruction_text = f"You hit the enemy's {cell_ship}!"
+            for ship in enemy.ships:
+                if ship.name == cell.ship:
+                    cell.ship = None
+                    ship.length -= 1
+                    if ship.length == 0:
+                        instruction_text = f"You sunk the enemy's {cell_ship}!"
+                        play_sound("sink")
+                        refresh_screen(player_grid, enemy_grid, button_list, ship_list,
+                                       instruction_text, hit_list, colour=RED)
+                        pygame.time.wait(2000)
+                        if check_for_win(enemy_grid):
+                            instruction_text = "You sunk all the enemy's ships. You win!"
+                            refresh_screen(player_grid, enemy_grid, button_list, ship_list,
+                                           instruction_text, hit_list, colour=RED)
+                            pygame.time.wait(2000)
+                            if game_over(True):
+                                ship_list.empty()
+                                hit_list.empty()
+                                main()
+        else:
+            hit_list.add(CellHit(Path(r"./Sprites/miss.png"), cell_rect_center))
+            play_sound("miss")
+            instruction_text = "Miss!"
+
+        refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
+        pygame.time.wait(1000)
+
+        enemy_hit = enemy.enemy_turn()
+        cell = player_grid.return_cell(enemy_hit)
+        cell_rect_center, cell_ship = cell.cell_clicked()
+        if cell_ship:  # ship name will be returned if there is a hit
+            hit_list.add(CellHit(Path(r"./Sprites/hit.png"), cell_rect_center))
+            if not enemy.ship_hit:
+                enemy.ship_hit = enemy_hit
+            elif enemy.ship_hit:
+                enemy.second_hit = enemy_hit
+            play_sound("hit")
+            instruction_text = f"Enemy attacked, x{enemy_hit[0]} : y{enemy_hit[1]}. " \
+                               f"They hit your {cell_ship}!"
+            for ship in ship_list:
+                if ship.name == cell.ship:
+                    cell.ship = None
+                    ship.length -= 1
+                    if ship.length == 0:
+                        instruction_text = f"Enemy sunk your {cell_ship}!"
+                        play_sound("sink")
+                        enemy.reset_hit_logs()
+                        refresh_screen(player_grid, enemy_grid, button_list, ship_list,
+                                       instruction_text, hit_list, colour=RED)
+                        pygame.time.wait(2000)
+                        if check_for_win(player_grid):
+                            instruction_text = "Enemy sunk all your ships. You lose!"
+                            refresh_screen(player_grid, enemy_grid, button_list, ship_list,
+                                           instruction_text, hit_list, colour=RED)
+                            pygame.time.wait(2000)
+                            if game_over(False):
+                                ship_list.empty()
+                                hit_list.empty()
+                                main()
+        else:
+            hit_list.add(CellHit(Path(r"./Sprites/miss.png"), cell_rect_center))
+            play_sound("miss")
+            instruction_text = f"Enemy attacked, x{enemy_hit[0]} : y{enemy_hit[1]}. They missed!"
+            if enemy.ship_hit and enemy.second_hit:
+                if not enemy.tested_no_hit:
+                    # record the miss if 2 hits are logged
+                    enemy.tested_no_hit = enemy_hit
+                else:
+                    # if a miss again after a miss already logged, this means the enemy is not
+                    # correctly tracking a ship (eg if 2 ships next to each other)
+                    # set tested_no_hit_2 to break out of the recursion to avoid crash
+                    enemy.tested_no_hit_2 = enemy_hit
+
+        refresh_screen(player_grid, enemy_grid, button_list, ship_list, instruction_text, hit_list)
+        pygame.time.wait(1000)
+    return instruction_text
 
 
 if __name__ == '__main__':
