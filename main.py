@@ -28,6 +28,12 @@ SHIPS = {"Battleship": [5, r"./Sprites/Battleship5.png"],
 pygame.init()
 window_surface = pygame.display.set_mode((1160, 580), 0, 32)
 
+title_font_60 = pygame.font.Font(Path(r"./Fonts/INVASION2000.TTF"), 60)
+title_font_80 = pygame.font.Font(Path(r"./Fonts/INVASION2000.TTF"), 80)
+grid_header_font = pygame.font.Font(Path(r"./Fonts/ARCADECLASSIC.TTF"), 35)
+instruction_font = pygame.font.SysFont(None, 42)
+body_font = pygame.font.Font(Path(r"./Fonts/INVASION2000.TTF"), 35)
+
 
 class Grid:
     """Container class for cell objects, performs checks and updates to the cells,
@@ -316,22 +322,14 @@ class EnemyAi:
 
 def display_permanent_text():
     """Displays game title and grid headers."""
-    title_font = pygame.font.Font(Path(r"./Fonts/INVASION2000.TTF"), 60)
-    title_text = title_font.render("Battleships!", True, BLACK, None)
-    title_text_rect = title_text.get_rect()
-    title_text_rect.centerx = window_surface.get_rect().centerx
-    title_text_rect.centery = 38
+    title_text = title_font_60.render("Battleships!", True, BLACK, None)
+    title_text_rect = title_text.get_rect(center=(window_surface.get_rect().centerx, 38))
 
-    grid_header_font = pygame.font.Font(Path(r"./Fonts/ARCADECLASSIC.TTF"), 35)
     player_text = grid_header_font.render("Player Grid", True, BLACK, None)
-    player_text_rect = player_text.get_rect()
-    player_text_rect.centerx = 240
-    player_text_rect.centery = 60
+    player_text_rect = player_text.get_rect(center=(240, 60))
 
     enemy_text = grid_header_font.render("Enemy Grid", True, BLACK, None)
-    enemy_text_rect = enemy_text.get_rect()
-    enemy_text_rect.centerx = 920
-    enemy_text_rect.centery = 60
+    enemy_text_rect = enemy_text.get_rect(center=(920,60))
 
     window_surface.blit(title_text, title_text_rect)
     window_surface.blit(player_text, player_text_rect)
@@ -340,11 +338,8 @@ def display_permanent_text():
 
 def display_instruction(text, colour=WHITE):
     """Displays instruction line at the bottom of the screen, pass 'text' to display"""
-    instruction_font = pygame.font.SysFont(None, 42)
     instruction_text = instruction_font.render(text, True, colour, GREY)
-    instruction_text_rect = instruction_text.get_rect()
-    instruction_text_rect.centerx = 580
-    instruction_text_rect.centery = 535
+    instruction_text_rect = instruction_text.get_rect(center=(580, 535))
     window_surface.blit(instruction_text, instruction_text_rect)
 
 
@@ -493,25 +488,17 @@ def game_over(win: bool):
     """Game over screen, displays different text based on result.
     Exits or restarts game based on click location"""
     window_surface.fill(GREY)
-    title_font = pygame.font.Font(Path(r"./Fonts/INVASION2000.TTF"), 80)
     if win:
-        game_over_text = title_font.render("You Win!", True, BLACK, None)
+        game_over_text = title_font_80.render("You Win!", True, BLACK, None)
     else:
-        game_over_text = title_font.render("Game Over!", True, BLACK, None)
-    game_over_text_rect = game_over_text.get_rect()
-    game_over_text_rect.centerx = 580
-    game_over_text_rect.centery = 200
+        game_over_text = _80.render("Game Over!", True, BLACK, None)
+    game_over_text_rect = game_over_text.get_rect(center=(580, 200))
 
-    body_font = pygame.font.Font(Path(r"./Fonts/INVASION2000.TTF"), 35)
     play_again_text = body_font.render("Play again?", True, BLACK, None)
-    play_again_text_rect = play_again_text.get_rect()
-    play_again_text_rect.centerx = 580
-    play_again_text_rect.centery = 300
+    play_again_text_rect = play_again_text.get_rect(center=(580, 300))
 
     yes_no_text = body_font.render("Yes                 /                 No", True, BLACK, None)
-    yes_no_text_rect = yes_no_text.get_rect()
-    yes_no_text_rect.centerx = 580
-    yes_no_text_rect.centery = 400
+    yes_no_text_rect = yes_no_text.get_rect(center=(580, 400))
 
     window_surface.blit(game_over_text, game_over_text_rect)
     window_surface.blit(play_again_text, play_again_text_rect)
