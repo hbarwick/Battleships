@@ -14,12 +14,18 @@ RED = (206, 10, 10)
 GREY = (107, 99, 99)
 DARK_GREY = (41, 41, 46)
 
-SHIPS = {"Battleship": [5, r"./Sprites/Battleship5.png"],
-         "Cruiser": [4, r"./Sprites/Cruiser4.png"],
-         "Submarine": [4, r"./Sprites/Submarine3.png"],
-         "Rescue Ship": [3, r"./Sprites/RescueShip3.png"],
-         "Destroyer": [2, r"./Sprites/Destroyer2.png"],
-         "Aeroplane": [1, r"./Sprites/Plane1.png"]}
+SHIPS = {"Battleship": [5, "./Sprites/Battleship5.png"],
+         "Cruiser": [4, "./Sprites/Cruiser4.png"],
+         "Submarine": [4, "./Sprites/Submarine3.png"],
+         "Rescue Ship": [3, "./Sprites/RescueShip3.png"],
+         "Destroyer": [2, "./Sprites/Destroyer2.png"],
+         "Aeroplane": [1, "./Sprites/Plane1.png"]}
+
+SOUNDS = {"boom": ["./Sounds/boom1.mp3", "./Sounds/boom2.mp3", "./Sounds/boom3.mp3"],
+          "splash": ["./Sounds/splash1.mp3", "./Sounds/splash2.mp3", "./Sounds/splash3.mp3"],
+          "sink": "./Sounds/sink.mp3",
+          "bgm": "./Sounds/valkyries.mid"}
+
 
 # Debugging ship set for quicker game
 # SHIPS = {"Battleship": [5, r".\Sprites\Battleship5.png"],
@@ -28,11 +34,11 @@ SHIPS = {"Battleship": [5, r"./Sprites/Battleship5.png"],
 pygame.init()
 window_surface = pygame.display.set_mode((1160, 580), 0, 32)
 
-title_font_60 = pygame.font.Font(Path(r"./Fonts/INVASION2000.TTF"), 60)
-title_font_80 = pygame.font.Font(Path(r"./Fonts/INVASION2000.TTF"), 80)
-grid_header_font = pygame.font.Font(Path(r"./Fonts/ARCADECLASSIC.TTF"), 35)
+title_font_60 = pygame.font.Font(Path("./Fonts/INVASION2000.TTF"), 60)
+title_font_80 = pygame.font.Font(Path("./Fonts/INVASION2000.TTF"), 80)
+grid_header_font = pygame.font.Font(Path("./Fonts/ARCADECLASSIC.TTF"), 35)
 instruction_font = pygame.font.SysFont(None, 42)
-body_font = pygame.font.Font(Path(r"./Fonts/INVASION2000.TTF"), 35)
+body_font = pygame.font.Font(Path("./Fonts/INVASION2000.TTF"), 35)
 
 
 class Grid:
